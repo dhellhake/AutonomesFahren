@@ -29,6 +29,7 @@
 
 
 #include "vmc.h"
+#include "time.h"
 
 /* Definition of Task Stacks */
 #define   TASK_STACKSIZE       2048
@@ -115,11 +116,18 @@ void sensorCollector(void* pdata)
 /* Prints "Hello World" and sleeps for three seconds */
 void task2(void* pdata)
 {
-  while (1)
-  { 
-    printf("Hello from task2\n");
-    OSTimeDlyHMSM(0, 0, 3, 0);
-  }
+	while (1)
+	{
+		INT32U start_execution = OSTimeGet();
+
+		//WORK BITCH!
+
+
+
+		INT32U timeToWait = 15 - (OSTimeGet() - start_execution);
+		if(timeToWait > 0)
+			OSTimeDlyHMSM(0, 0, 0, timeToWait);
+	}
 }
 /* The main function creates two task and starts multi-tasking */
 int main(void)
@@ -127,15 +135,6 @@ int main(void)
   
   init();
 
-  OSTaskCreateExt(sensorCollector,
-                  NULL,
-                  (void *)&sensorCollector_stk[TASK_STACKSIZE-1],
-                  TASK1_PRIORITY,
-                  TASK1_PRIORITY,
-                  sensorCollector_stk,
-                  TASK_STACKSIZE,
-                  NULL,
-                  0);
               
                
   OSTaskCreateExt(task2,
