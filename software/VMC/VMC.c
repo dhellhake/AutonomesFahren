@@ -35,7 +35,7 @@
 /* Definition of Task Stacks */
 #define   TASK_STACKSIZE       2048
 OS_STK    sensorCollector_stk[TASK_STACKSIZE];
-OS_STK    task2_stk[TASK_STACKSIZE];
+OS_STK    drivingTask_stk[TASK_STACKSIZE];
 
 /* Definition of Task Priorities */
 
@@ -115,7 +115,35 @@ void sensorCollector(void* pdata)
   }
 }
 /* Prints "Hello World" and sleeps for three seconds */
-void task2(void* pdata)
+void drivingTask(void* pdata)
+{
+	unsigned int i = 10;
+
+	OSTimeDlyHMSM(0, 0, 1, 0);
+
+	while (1)
+	{
+		if(i>=100)
+			i = 0;
+		else
+			i+=10;
+
+		OSTimeDlyHMSM(0, 0, 1, 0);
+
+		printf("PWM: %d", i);
+
+		set_duty_cycle(pFrontRightDutySet, i);
+		set_duty_cycle(pRearRightDutySet, i);
+		set_duty_cycle(pRearLeftDutySet, i);
+		set_duty_cycle(pFrontLeftDutySet, i);
+
+		*pwm_enable = (ALL_WHEEL_FWD_MASK | ENABLE_ENC_MASK );
+
+	}
+}
+
+/*
+void task_15ms(void* pdata)
 {
 	while (1)
 	{
@@ -130,24 +158,34 @@ void task2(void* pdata)
 		if(timeToWait > 0)
 			OSTimeDlyHMSM(0, 0, 0, timeToWait);
 	}
-}
+}*/
+
 /* The main function creates two task and starts multi-tasking */
 int main(void)
 {
   
   init();
 
-              
+  OSTaskCreateExt(sensorCollector,
+                      NULL,
+                      (void *)&sensorCollector_stk[TASK_STACKSIZE-1],
+                      TASK1_PRIORITY,
+                      TASK1_PRIORITY,
+                      sensorCollector_stk,
+                      TASK_STACKSIZE,
+                      NULL,
+                      0);
                
-  OSTaskCreateExt(task2,
+  OSTaskCreateExt(drivingTask,
                   NULL,
-                  (void *)&task2_stk[TASK_STACKSIZE-1],
+                  (void *)&drivingTask_stk[TASK_STACKSIZE-1],
                   TASK2_PRIORITY,
                   TASK2_PRIORITY,
-                  task2_stk,
+                  drivingTask_stk,
                   TASK_STACKSIZE,
                   NULL,
                   0);
+
   OSStart();
   return 0;
 }
