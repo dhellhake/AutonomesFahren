@@ -1,0 +1,6 @@
+SCL -> GPIO_1[19]
+SDA -> GPIO1[21]
+T0 -> GPIO1[27]
+E0 -> GPIO1[25]
+T1 -> GPIO1[11]
+E1 -> GPIO1[9]

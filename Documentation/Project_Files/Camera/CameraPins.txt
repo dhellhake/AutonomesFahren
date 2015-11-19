@@ -1,0 +1,7 @@
+.OV7670_DATA_to_the_ov7670_0                 (GPIO_0[17:10]),
+                       .OV7670_XCLK_from_the_ov7670_0               (GPIO_0[18]),
+                       .OV7670_PCLK_to_the_ov7670_0                 (GPIO_0[19]),
+                       .OV7670_HREF_to_the_ov7670_0                 (GPIO_0[20]),
+                       .OV7670_VSYNC_to_the_ov7670_0                (GPIO_0[21]),
+                       .OV7670_PWDN_from_the_ov7670_0               (GPIO_0[8]),
+                       .OV7670_RESET_from_the_ov7670_0              (GPIO_0[9]),

@@ -38,7 +38,10 @@ OS_STK    sensorCollector_stk[TASK_STACKSIZE];
 OS_STK    drivingTask_stk[TASK_STACKSIZE];
 
 /* Definition of Task Priorities */
-
+/* Each Task must have a unique priority number
+ * between 0 and 254. Priority level 0 is the
+ * highest priority.
+ */
 #define TASK1_PRIORITY      1
 #define TASK2_PRIORITY      2
 
@@ -121,6 +124,7 @@ void drivingTask(void* pdata)
 
 	OSTimeDlyHMSM(0, 0, 1, 0);
 
+	/* With MicroC/OS-II, each task must be an infinite loop */
 	while (1)
 	{
 		if(i>=100)
@@ -128,6 +132,16 @@ void drivingTask(void* pdata)
 		else
 			i+=10;
 
+		/* Task is suspended (will not run) for one complete second
+		 * by calling OSTimeDlyHMSM(). The HMSM stands for Hours,
+		 * Minutes, Seconds and Milliseconds and corresponds to the
+		 * arguments passed to OSTimeDlyHMSM(). Because the Task is
+		 * suspended for one second, MicroC/OS-II will start executing
+		 * the next most important task. You should note that without
+		 * OSTimeDlyHMSM() (or other similar functions), the Task would
+		 * be a true infinite loop and other tasks would never get a
+		 * chance to run.
+		 */
 		OSTimeDlyHMSM(0, 0, 1, 0);
 
 		printf("PWM: %d", i);
@@ -165,6 +179,40 @@ int main(void)
 {
   
   init();
+
+  OSInit();
+
+  /* Create Semaphor */
+  //Sem = OSSemCreate(1);
+
+  /* Acquiring semaphore is done by calling OSSemPend()
+   * and passing it the 'handle' of the semaphore which
+   * was created earlier. The second argument of OSSemPen()
+   * is used to specify a timout. A value of 0 means that
+   * this task will wait forever for the semaphore. If the
+   * semaphore was 'owned' by another task, MicroC/OS-II would
+   * have to suspend this task and execute the next most
+   * important task.
+   */
+  //OSSemPend(Sem, timeout, &err);
+
+  /* Semaphore is released by calling OSSemPost(). Here
+   * simply the handle of the semaphore has to be specified.
+   */
+  //OSSemPost(Sem);
+
+  /* Processor specific macro used to disable interrupts */
+  //OS_ENTER_CRITICAL();
+  //OS_EXIT_CRITICAL();
+
+  /* Changing tick rate is handled by PC service called
+   * PC_SetTickRate() and is passed the desired tick rate
+   * (Set OS_TICKS_PER_SEC in system.h)
+   */
+  // PC_SetTickRate(OS_TICKS_PER_SEC)
+
+  /* Clear Conext Switch Counter */
+  //OSCtxSwCtr = 0;
 
   OSTaskCreateExt(sensorCollector,
                       NULL,
