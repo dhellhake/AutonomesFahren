@@ -47,14 +47,19 @@ int main()
 	set_duty_cycle(pRearLeftDutySet, 50);
 	set_duty_cycle(pFrontLeftDutySet, 50);
 
+	//
+	// ENABLE_ENC_MASK -> if not enabled encoder values = 0;
+	// if pwm_enabled then motors will run
 	*pwm_enable = (ALL_WHEEL_FWD_MASK | ENABLE_ENC_MASK );
 	delay(10000000);
+	//
     *pwm_enable = PAUSE_ENC_MASK;
 
 	fr = *pFrontRightEncRead;
 	rr = *pRearRightEncRead;
 	rl = *pRearLeftEncRead;
 	fl = *pFrontLeftEncRead;
+	// reset everything
 	*pwm_enable = 0;
 
 	printf("Front right = %u\n", fr);
@@ -66,7 +71,8 @@ int main()
 
 	delay(100000);
 
-
+	// write encoder values to "playback" trajectory -> PLAY_BACK_MASK
+	// for playback ensure same duty cycle
 	*pFrontRightEncSet = fr;
 	*pRearRightEncSet = rr;
 	*pRearLeftEncSet = rl;
@@ -74,7 +80,9 @@ int main()
 
 	*pwm_enable = (ALL_WHEEL_FWD_MASK | PLAY_BACK_MASK | ENABLE_ENC_MASK );
 
+	// finish of playback is indicated by WHEEL_READY_MASK
 	while (!(*pwm_enable & WHEEL_READY_MASK));
+	// read out actual values
 	fr = *pFrontRightEncRead;
 	rr = *pRearRightEncRead;
 	rl = *pRearLeftEncRead;
