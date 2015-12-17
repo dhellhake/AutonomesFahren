@@ -137,3 +137,7 @@ void I2CWrite(unsigned char I2CAddr, unsigned char RegAddr, unsigned char data);
 void I2CRead(unsigned char I2CAddr, unsigned char RegAddr, unsigned int len, char* cBuff);
 
 #endif /* HEAD_H_ */
+
+#ifdef __cplusplus
+}
+#endif

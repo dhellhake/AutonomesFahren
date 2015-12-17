@@ -26,11 +26,17 @@
 *     If this design is run on the ISS, terminal output will take several*
 *     minutes per iteration.                                             *
 **************************************************************************/
-
+#define __cplusplus
 
 #include "vmc.h"
 #include "time.h"
 #include "MPU6050/mpu6050.h"
+#include <iostream>
+#include <cstdlib>
+
+using namespace std;
+
+#define DEBUG
 
 /* Definition of Task Stacks */
 #define   TASK_STACKSIZE       2048
@@ -54,45 +60,151 @@ void speedControl(void *pdata)
 	int time_old = 0;
 	int delta_t = 0;
 
+	INT32U whl_ticks_fl = 0;
+	INT32U whl_ticks_fr = 0;
+	INT32U whl_ticks_rl = 0;
+	INT32U whl_ticks_rr = 0;
+
+	INT32U whl_ticks_fl_old = 0;
+	INT32U whl_ticks_fr_old = 0;
+	INT32U whl_ticks_rl_old = 0;
+	INT32U whl_ticks_rr_old = 0;
+
+	INT32U delta_whl_ticks_fl = 0;
+	INT32U delta_whl_ticks_fr = 0;
+	INT32U delta_whl_ticks_rl = 0;
+	INT32U delta_whl_ticks_rr = 0;
+
+	INT32U delta_s_fl = 0;
+	INT32U delta_s_fr = 0;
+	INT32U delta_s_rl = 0;
+	INT32U delta_s_rr = 0;
+
 	int actual_speed_fl = 0;
 	int actual_speed_fr = 0;
 	int actual_speed_rl = 0;
 	int actual_speed_rr = 0;
 
-	int speed_fl[4] = {0, 0, 0, 0};
-	int speed_fr[4] = {0, 0, 0, 0};
-	int speed_rl[4] = {0, 0, 0, 0};
-	int speed_rr[4] = {0, 0, 0, 0};
-
-	int speed = 0;
+	static int speed_fl[4] = {0, 0, 0, 0};
+	static int speed_fr[4] = {0, 0, 0, 0};
+	static int speed_rl[4] = {0, 0, 0, 0};
+	static int speed_rr[4] = {0, 0, 0, 0};
 
 	int i = 0;
+
+	INT32U start_execution = 0;
+	INT32U timeToWait = 0;
 
 	// FIR-Filter leads to attack-time of regulator
 
 	while(1)
 	{
+		start_execution = OSTimeGet();
+
 		time_old = time;
-		/* Save actual time in [s] */
-		time = OSTimeGet() / OS_TICKS_PER_SEC;
+		/* Save actual time in [ms] */
+		time = OSTimeGet() / OS_TICKS_PER_MSEC;
 		delta_t = time - time_old;
-		printf("OSTimeGet: %d\n", OSTimeGet());
-		printf("time: %d\n", time);
-		printf("time_old: %d\n", time_old);
-		printf("delta_t: %d\n", delta_t);
+
+		whl_ticks_fl_old = whl_ticks_fl;
+		whl_ticks_fr_old = whl_ticks_fr;
+		whl_ticks_rl_old = whl_ticks_rl;
+		whl_ticks_rr_old = whl_ticks_rr;
+
+		whl_ticks_fl = *pFrontLeftEncRead;
+		whl_ticks_fr = *pFrontRightEncRead;
+		whl_ticks_rl = *pRearLeftEncRead;
+		whl_ticks_rr = *pRearRightEncRead;
+
+		delta_whl_ticks_fl = whl_ticks_fl - whl_ticks_fl_old;
+		delta_whl_ticks_fr = whl_ticks_fr - whl_ticks_fr_old;
+		delta_whl_ticks_rl = whl_ticks_rl - whl_ticks_rl_old;
+		delta_whl_ticks_rr = whl_ticks_rr - whl_ticks_rr_old;
+
+		delta_s_fl = delta_whl_ticks_fl * DISTANCE_PER_WHL_TICK;
+		delta_s_fr = delta_whl_ticks_fr * DISTANCE_PER_WHL_TICK;
+		delta_s_rl = delta_whl_ticks_rl * DISTANCE_PER_WHL_TICK;
+		delta_s_rr = delta_whl_ticks_rr * DISTANCE_PER_WHL_TICK;
 
 		if(i > 3)
 		{
 			i = 0;
 		}
 
-		speed_fl[i] = 0;
-
+		speed_fl[i] = delta_s_fl*1000/delta_t; // [mm/s]
+		speed_fr[i] = delta_s_fr*1000/delta_t;
+		speed_rl[i] = delta_s_rl*1000/delta_t;
+		speed_rr[i] = delta_s_rr*1000/delta_t;
 
 		actual_speed_fl = (speed_fl[0] + speed_fl[1] + speed_fl[2] + speed_fl[3]) >> 2;
 		actual_speed_fr = (speed_fr[0] + speed_fr[1] + speed_fr[2] + speed_fr[3]) >> 2;
-		actual_speed_rl = (speed_rl[0] + speed_rl[1] + speed_rr[2] + speed_rl[3]) >> 2;
+		actual_speed_rl = (speed_rl[0] + speed_rl[1] + speed_rl[2] + speed_rl[3]) >> 2;
 		actual_speed_rr = (speed_rr[0] + speed_rr[1] + speed_rr[2] + speed_rr[3]) >> 2;
+
+		speed = ((actual_speed_rl + actual_speed_rr) >> 1);
+
+		e_speed = desired_speed - speed;
+
+		P_SpeedCtrl = ((Kp_SpeedCtrl_num * e_speed) / Kp_SpeedCtrl_den);
+
+		I_SpeedCtrl_error = I_SpeedCtrl_error + e_speed;
+
+		if(I_SpeedCtrl_error < I_SpeedCtrl_min)
+		{
+			I_SpeedCtrl_error = I_SpeedCtrl_min;
+		}
+		if(I_SpeedCtrl_error > I_SpeedCtrl_max)
+		{
+			I_SpeedCtrl_error = I_SpeedCtrl_max;
+		}
+
+		I_SpeedCtrl = ((Ki_SpeedCtrl_num * I_SpeedCtrl_error) / Ki_SpeedCtrl_den);
+
+		Fast_Forward_Control = ((36 * desired_speed)/1000) + 18;
+
+		PWM_SpeedCtrl = (INT16S) ((P_SpeedCtrl + I_SpeedCtrl) + Fast_Forward_Control);
+
+		if(PWM_SpeedCtrl < PWM_SpeedCtrl_min)
+		{
+			PWM_SpeedCtrl = PWM_SpeedCtrl_min;
+		}
+		else if(PWM_SpeedCtrl > PWM_SpeedCtrl_max)
+		{
+			PWM_SpeedCtrl = PWM_SpeedCtrl_max;
+		}
+
+		set_duty_cycle( pFrontRightDutySet, PWM_SpeedCtrl);
+		set_duty_cycle(pRearRightDutySet, PWM_SpeedCtrl);
+		set_duty_cycle(pRearLeftDutySet, PWM_SpeedCtrl);
+		set_duty_cycle(pFrontLeftDutySet, PWM_SpeedCtrl);
+
+		*pwm_enable = (ALL_WHEEL_FWD_MASK | ENABLE_ENC_MASK );
+
+#ifdef DEBUG
+		printf("time: %d\n", time);
+		printf("time_old: %d\n", time_old);
+		printf("delta_t: %d\n", delta_t);
+
+		printf("delta_whl_ticks_fl: %d\n", delta_whl_ticks_fl);
+		printf("delta_whl_ticks_fr: %d\n", delta_whl_ticks_fr);
+		printf("delta_whl_ticks_rl: %d\n", delta_whl_ticks_rl);
+		printf("delta_whl_ticks_rr: %d\n", delta_whl_ticks_rr);
+
+		printf("actual_speed_fl: %d\n", actual_speed_fl);
+		printf("actual_speed_fr: %d\n", actual_speed_fr);
+		printf("actual_speed_rl: %d\n", actual_speed_rl);
+		printf("actual_speed_rr: %d\n", actual_speed_rr);
+
+		printf("speed: %d\n", speed);
+		printf("actual_speed_rr: %d\n", actual_speed_rr);
+#endif
+
+		i = i + 1;
+
+		timeToWait = SPD_CTRL_CYCLE_TIME_MS - (OSTimeGet() - start_execution);
+
+		if(timeToWait > 0)
+			OSTimeDlyHMSM(0, 0, 0, timeToWait);
 	}
 }
 
@@ -104,8 +216,8 @@ void sensorCollector(void* pdata)
 			unsigned int uiSouthEastDis = 0;
 			short AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ, x, y, z;
 			char cBuff[32];
-			bool_t bGapStarted = false;
-			ParkingStateType_t cs = Ready;
+			bool bGapStarted = false;
+			//ParkingStateType_t cs = Ready;
 			*pwm_enable = 0;
 
 	I2CWrite(MPU_SLAVE_ADDRESS, 0x6b, 0x0);
@@ -171,23 +283,115 @@ void sensorCollector(void* pdata)
 /* Prints "Hello World" and sleeps for three seconds */
 void drivingTask(void* pdata)
 {
-	unsigned int i = 60;
+	int time = 0;
+	int time_old = 0;
+	int delta_t = 0;
+
+	INT32U whl_ticks_fl = 0;
+	INT32U whl_ticks_fr = 0;
+	INT32U whl_ticks_rl = 0;
+	INT32U whl_ticks_rr = 0;
+
+	INT32U whl_ticks_fl_old = 0;
+	INT32U whl_ticks_fr_old = 0;
+	INT32U whl_ticks_rl_old = 0;
+	INT32U whl_ticks_rr_old = 0;
+
+	INT32U delta_whl_ticks_fl = 0;
+	INT32U delta_whl_ticks_fr = 0;
+	INT32U delta_whl_ticks_rl = 0;
+	INT32U delta_whl_ticks_rr = 0;
+
+	INT32U delta_s_fl = 0;
+	INT32U delta_s_fr = 0;
+	INT32U delta_s_rl = 0;
+	INT32U delta_s_rr = 0;
+
+	int actual_speed_fl = 0;
+	int actual_speed_fr = 0;
+	int actual_speed_rl = 0;
+	int actual_speed_rr = 0;
+
+	static int speed_fl[4] = {0, 0, 0, 0};
+	static int speed_fr[4] = {0, 0, 0, 0};
+	static int speed_rl[4] = {0, 0, 0, 0};
+	static int speed_rr[4] = {0, 0, 0, 0};
+
+	int i = 0;
+
+	int k = 0;
+
+	INT32U start_execution = 0;
+	INT32U timeToWait = 0;
+
+
+
+	unsigned int j = 0;
 
 	OSTimeDlyHMSM(0, 0, 1, 0);
-
-	set_duty_cycle(pFrontRightDutySet, i);
-	set_duty_cycle(pRearRightDutySet, i);
-	set_duty_cycle(pRearLeftDutySet, i);
-	set_duty_cycle(pFrontLeftDutySet, i);
 
 	/* With MicroC/OS-II, each task must be an infinite loop */
 	while (1)
 	{
-		/*if(i>=100)
+		start_execution = OSTimeGet();
+
+		time_old = time;
+		/* Save actual time in [ms] */
+		time = OSTimeGet() / OS_TICKS_PER_MSEC;
+		delta_t = time - time_old;
+
+		whl_ticks_fl_old = whl_ticks_fl;
+		whl_ticks_fr_old = whl_ticks_fr;
+		whl_ticks_rl_old = whl_ticks_rl;
+		whl_ticks_rr_old = whl_ticks_rr;
+
+		whl_ticks_fl = *pFrontLeftEncRead;
+		whl_ticks_fr = *pFrontRightEncRead;
+		whl_ticks_rl = *pRearLeftEncRead;
+		whl_ticks_rr = *pRearRightEncRead;
+
+		delta_whl_ticks_fl = whl_ticks_fl - whl_ticks_fl_old;
+		delta_whl_ticks_fr = whl_ticks_fr - whl_ticks_fr_old;
+		delta_whl_ticks_rl = whl_ticks_rl - whl_ticks_rl_old;
+		delta_whl_ticks_rr = whl_ticks_rr - whl_ticks_rr_old;
+
+		delta_s_fl = delta_whl_ticks_fl * DISTANCE_PER_WHL_TICK;
+		delta_s_fr = delta_whl_ticks_fr * DISTANCE_PER_WHL_TICK;
+		delta_s_rl = delta_whl_ticks_rl * DISTANCE_PER_WHL_TICK;
+		delta_s_rr = delta_whl_ticks_rr * DISTANCE_PER_WHL_TICK;
+
+		if(i > 3)
+		{
 			i = 0;
-		else
-			i+=10;
-		 */
+		}
+
+		speed_fl[i] = delta_s_fl*1000/delta_t; // [mm/s]
+		speed_fr[i] = delta_s_fr*1000/delta_t;
+		speed_rl[i] = delta_s_rl*1000/delta_t;
+		speed_rr[i] = delta_s_rr*1000/delta_t;
+
+		actual_speed_fl = (speed_fl[0] + speed_fl[1] + speed_fl[2] + speed_fl[3]) >> 2;
+		actual_speed_fr = (speed_fr[0] + speed_fr[1] + speed_fr[2] + speed_fr[3]) >> 2;
+		actual_speed_rl = (speed_rl[0] + speed_rl[1] + speed_rl[2] + speed_rl[3]) >> 2;
+		actual_speed_rr = (speed_rr[0] + speed_rr[1] + speed_rr[2] + speed_rr[3]) >> 2;
+
+		speed = ((actual_speed_rl + actual_speed_rr) >> 1);
+
+		set_duty_cycle( pFrontRightDutySet, j);
+		set_duty_cycle(pRearRightDutySet, j);
+		set_duty_cycle(pRearLeftDutySet, j);
+		set_duty_cycle(pFrontLeftDutySet, j);
+
+		if ((k%30) == 0)
+		{
+			if(j>=100)
+				j = 0;
+			else
+				j+=5;
+		}
+
+		k = k + 1;
+		i = i + 1;
 
 		/* Task is suspended (will not run) for one complete second
 		 * by calling OSTimeDlyHMSM(). The HMSM stands for Hours,
@@ -199,17 +403,40 @@ void drivingTask(void* pdata)
 		 * be a true infinite loop and other tasks would never get a
 		 * chance to run.
 		 */
-		OSTimeDlyHMSM(0, 0, 1, 0);
+		//OSTimeDlyHMSM(0, 0, 1, 0);
 
-		printf("PWM: %d", i);
+		timeToWait = SPD_CTRL_CYCLE_TIME_MS - (OSTimeGet() - start_execution);
+
+		if(timeToWait > 0)
+			OSTimeDlyHMSM(0, 0, 0, timeToWait);
 
 		/*set_duty_cycle(pFrontRightDutySet, i);
 		set_duty_cycle(pRearRightDutySet, i);
 		set_duty_cycle(pRearLeftDutySet, i);
 		set_duty_cycle(pFrontLeftDutySet, i);*/
 
-		//*pwm_enable = (ALL_WHEEL_FWD_MASK | ENABLE_ENC_MASK );
-		*pwm_enable = (TURN_LEFT_MASK | ENABLE_ENC_MASK );
+		*pwm_enable = (ALL_WHEEL_FWD_MASK | ENABLE_ENC_MASK );
+		//*pwm_enable = (TURN_LEFT_MASK | ENABLE_ENC_MASK );
+#ifdef DEBUG
+		printf("-----------------------------------\n");
+		printf("PWM: %d\n", j);
+		printf("-----------------------------------\n");
+		printf("time: %d\n", time);
+		printf("time_old: %d\n", time_old);
+		printf("delta_t: %d\n", delta_t);
+
+		printf("delta_whl_ticks_fl: %d\n", delta_whl_ticks_fl);
+		printf("delta_whl_ticks_fr: %d\n", delta_whl_ticks_fr);
+		printf("delta_whl_ticks_rl: %d\n", delta_whl_ticks_rl);
+		printf("delta_whl_ticks_rr: %d\n", delta_whl_ticks_rr);
+
+		printf("actual_speed_fl: %d\n", actual_speed_fl);
+		printf("actual_speed_fr: %d\n", actual_speed_fr);
+		printf("actual_speed_rl: %d\n", actual_speed_rl);
+		printf("actual_speed_rr: %d\n", actual_speed_rr);
+
+		printf("speed: %d\n", speed);
+#endif
 
 	}
 }
@@ -284,13 +511,23 @@ int main(void)
                
   OSTaskCreateExt(speedControl,
                   NULL,
-                  (void *)&speedControl_stk[TASK_STACKSIZE-1],
+                  &speedControl_stk[TASK_STACKSIZE-1],
                   TASK_SPD_CTRL_PRIORITY,
                   TASK_SPD_CTRL_PRIORITY,
                   speedControl_stk,
                   TASK_STACKSIZE,
                   NULL,
                   0);
+
+  /*OSTaskCreateExt(drivingTask,
+                    NULL,
+                    &drivingTask_stk[TASK_STACKSIZE-1],
+                    TASK1_PRIORITY,
+                    TASK1_PRIORITY,
+                    drivingTask_stk,
+                    TASK_STACKSIZE,
+                    NULL,
+                    0);*/
 
   OSStart();
   return 0;
