@@ -15,12 +15,12 @@
 
 #define SPD_CTRL_CYCLE_TIME_MS 100
 
-INT32S desired_speed = 500;
+INT32S desired_speed = 300;
 INT16S Kp_SpeedCtrl_num = 1;
 INT16S Kp_SpeedCtrl_den = 1;
-INT16S Ki_SpeedCtrl_num = 1;
+INT16S Ki_SpeedCtrl_num = 0;
 INT16S Ki_SpeedCtrl_den = 1;
-INT16S Kd_SpeedCtrl_num = 1;
+INT16S Kd_SpeedCtrl_num = 0;
 INT16S Kd_SpeedCtrl_den = 1;
 INT32S I_SpeedCtrl_min = -10000;
 INT32S I_SpeedCtrl_max = 10000;

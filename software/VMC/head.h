@@ -4,7 +4,9 @@
  *  Created on: 04.07.2014
  *      Author: Hardik Shah
  */
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #ifndef HEAD_H_
 #define HEAD_H_
@@ -137,3 +139,7 @@ void I2CWrite(unsigned char I2CAddr, unsigned char RegAddr, unsigned char data);
 void I2CRead(unsigned char I2CAddr, unsigned char RegAddr, unsigned int len, char* cBuff);
 
 #endif /* HEAD_H_ */
+
+#ifdef __cplusplus
+}
+#endif

@@ -33,6 +33,7 @@
 #include "MPU6050/mpu6050.h"
 #include <iostream>
 #include <cstdlib>
+#include "altera_up_avalon_rs232.h"
 
 using namespace std;
 
@@ -43,6 +44,7 @@ using namespace std;
 OS_STK    sensorCollector_stk[TASK_STACKSIZE];
 OS_STK    drivingTask_stk[TASK_STACKSIZE];
 OS_STK	  speedControl_stk[TASK_STACKSIZE];
+OS_STK	  uart_stk[TASK_STACKSIZE];
 
 /* Definition of Task Priorities */
 /* Each Task must have a unique priority number
@@ -52,6 +54,38 @@ OS_STK	  speedControl_stk[TASK_STACKSIZE];
 #define TASK_SPD_CTRL_PRIORITY		0
 #define TASK1_PRIORITY      		2
 #define TASK2_PRIORITY      		3
+#define TASK_UART_PRIORITY			4
+
+void uart(void *pdata)
+{
+	int i = 0;
+	alt_u8 testStr[] = "Hello\n1";
+	alt_u8 parityErr = 0;
+	alt_up_rs232_dev *pUart;
+
+	while (1)
+	  {
+	    pUart = alt_up_rs232_open_dev("/dev/rs232_0");
+
+	    printf("%x\n", pUart->base);
+	    for (i = 0; i < 7; i++)
+	    {
+	        alt_u8 c;
+	        alt_up_rs232_write_data(pUart, testStr[i]); // externally looped back
+	    }
+	    OSTimeDlyHMSM(0, 0, 1, 0);
+
+	    /*for (i = 0; i < 7; )
+	        {
+	            alt_u8 c;
+	            if (alt_up_rs232_read_data(pUart, &c, &parityErr) == 0)
+	            {
+	                printf("%c", c);
+	                i++;
+	            }
+	        }*/
+	  }
+}
 
 /* Task for Speed Control with PID-Regulator */
 void speedControl(void *pdata)
@@ -518,6 +552,16 @@ int main(void)
                   TASK_STACKSIZE,
                   NULL,
                   0);
+
+  /*OSTaskCreateExt(uart,
+                    NULL,
+                    &uart_stk[TASK_STACKSIZE-1],
+                    TASK_UART_PRIORITY,
+                    TASK_UART_PRIORITY,
+                    uart_stk,
+                    TASK_STACKSIZE,
+                    NULL,
+                    0);*/
 
   /*OSTaskCreateExt(drivingTask,
                     NULL,
