@@ -44,3 +44,8 @@ software/VMC/create-this-app
 software/VMC/readme.txt
 software/VMC/Makefile
 software/VMC_bsp/*
+software/VMC/VMC.map
+software/VMC/VMC.elf
+software/VMC/VMC.objdump
+software/VMC/VMC.objdump
+software/VMC/obj/*
