@@ -40,3 +40,7 @@ local.properties
 
 # TeXlipse plugin
 .texlipse
+software/VMC/create-this-app
+software/VMC/readme.txt
+software/VMC/Makefile
+software/VMC_bsp/*
