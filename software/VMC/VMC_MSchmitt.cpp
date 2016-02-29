@@ -40,6 +40,7 @@
 #include <cstdlib>
 #include "altera_up_avalon_rs232.h"
 #include "head.c"
+#include "VMClib/VMClib.c"
 
 using namespace std;
 
@@ -861,7 +862,7 @@ int main(void)
                       NULL,
                       0);*/
                
-  OSTaskCreateExt(speedControl,
+  /* OSTaskCreateExt(speedControl,
                   NULL,
                   &speedControl_stk[TASK_STACKSIZE-1],
                   TASK_SPD_CTRL_PRIORITY,
@@ -869,7 +870,17 @@ int main(void)
                   speedControl_stk,
                   TASK_STACKSIZE,
                   NULL,
-                  0);
+                  0); */
+
+  OSTaskCreateExt(MNV_Queue_Test,
+                    NULL,
+                    &speedControl_stk[TASK_STACKSIZE-1],
+                    TASK_SPD_CTRL_PRIORITY,
+                    TASK_SPD_CTRL_PRIORITY,
+                    speedControl_stk,
+                    TASK_STACKSIZE,
+                    NULL,
+                    0);
 
   /*OSTaskCreateExt(step_response,
                     NULL,
