@@ -219,21 +219,21 @@ void speedControl(void *pdata)
 
 		Fast_Forward_Control = ((36 * desired_speed)/1000) + 18;
 
-		PWM_SpeedCtrl = (INT16S) ((P_SpeedCtrl + I_SpeedCtrl + D_SpeedCtrl) + Fast_Forward_Control);
+		g_i16s_PWMSpeedCtrl = (INT16S) ((P_SpeedCtrl + I_SpeedCtrl + D_SpeedCtrl) + Fast_Forward_Control);
 
-		if(PWM_SpeedCtrl < PWM_SpeedCtrl_min)
+		if(g_i16s_PWMSpeedCtrl < PWM_SpeedCtrl_min)
 		{
-			PWM_SpeedCtrl = PWM_SpeedCtrl_min;
+			g_i16s_PWMSpeedCtrl = PWM_SpeedCtrl_min;
 		}
-		else if(PWM_SpeedCtrl > PWM_SpeedCtrl_max)
+		else if(g_i16s_PWMSpeedCtrl > PWM_SpeedCtrl_max)
 		{
-			PWM_SpeedCtrl = PWM_SpeedCtrl_max;
+			g_i16s_PWMSpeedCtrl = PWM_SpeedCtrl_max;
 		}
 
-		set_duty_cycle( pFrontRightDutySet, PWM_SpeedCtrl);
-		set_duty_cycle(pRearRightDutySet, PWM_SpeedCtrl);
-		set_duty_cycle(pRearLeftDutySet, PWM_SpeedCtrl);
-		set_duty_cycle(pFrontLeftDutySet, PWM_SpeedCtrl);
+		set_duty_cycle( pFrontRightDutySet, g_i16s_PWMSpeedCtrl);
+		set_duty_cycle(pRearRightDutySet, g_i16s_PWMSpeedCtrl);
+		set_duty_cycle(pRearLeftDutySet, g_i16s_PWMSpeedCtrl);
+		set_duty_cycle(pFrontLeftDutySet, g_i16s_PWMSpeedCtrl);
 
 		*pwm_enable = (ALL_WHEEL_FWD_MASK | ENABLE_ENC_MASK );
 
@@ -251,7 +251,7 @@ void speedControl(void *pdata)
 		printf("I_SpeedCtrl: %d\n", I_SpeedCtrl);
 		printf("D_SpeedCtrl: %d\n", D_SpeedCtrl);
 		printf("Fast_Forward_Control: %d\n", Fast_Forward_Control);
-		printf("PWM_SpeedCtrl: %d\n", PWM_SpeedCtrl);
+		printf("g_i16s_PWMSpeedCtrl: %d\n", g_i16s_PWMSpeedCtrl);
 
 		printf("actual_speed_fl: %d\n", actual_speed_fl);
 		printf("actual_speed_fr: %d\n", actual_speed_fr);
@@ -526,8 +526,28 @@ void task_15ms(void* pdata)
 void test(void* pdata)
 {
 	int i = 0;
+	g_i16s_PWMSpeedCtrl = 40;
+	*pwm_enable = (ALL_WHEEL_FWD_MASK | ENABLE_ENC_MASK );
 
-	for(i = 0; i < 20; i++)
+	calcSteeringOffset(33);
+	OSTimeDlyHMSM(0,0,3,0);
+
+	calcSteeringOffset(-33);
+	OSTimeDlyHMSM(0,0,3,0);
+
+	calcSteeringOffset(66);
+	OSTimeDlyHMSM(0,0,3,0);
+
+	calcSteeringOffset(-66);
+	OSTimeDlyHMSM(0,0,3,0);
+
+	calcSteeringOffset(100);
+	OSTimeDlyHMSM(0,0,3,0);
+
+	calcSteeringOffset(-100);
+	OSTimeDlyHMSM(0,0,3,0);
+
+	/*for(i = 0; i < 20; i++)
 	{
 		desired_speed = i * 100;
 #ifdef DEBUG
@@ -543,7 +563,7 @@ void test(void* pdata)
 		printf("desired_speed: %i\n", desired_speed);
 #endif
 		OSTimeDlyHMSM(0,0,1,0);
-	}
+	}*/
 }
 
 
@@ -660,7 +680,7 @@ void step_response(void *pdata)
 			printf("delta_whl_ticks_rl: %d\n", delta_whl_ticks_rl);
 			printf("delta_whl_ticks_rr: %d\n", delta_whl_ticks_rr);
 
-			printf("PWM_SpeedCtrl: %d\n", PWM_SpeedCtrl);
+			printf("g_i16s_PWMSpeedCtrl: %d\n", g_i16s_PWMSpeedCtrl);
 
 			printf("actual_speed_fl: %d\n", actual_speed_fl);
 			printf("actual_speed_fr: %d\n", actual_speed_fr);
@@ -862,7 +882,7 @@ int main(void)
                       NULL,
                       0);*/
                
-  /* OSTaskCreateExt(speedControl,
+   /*OSTaskCreateExt(speedControl,
                   NULL,
                   &speedControl_stk[TASK_STACKSIZE-1],
                   TASK_SPD_CTRL_PRIORITY,
@@ -870,17 +890,7 @@ int main(void)
                   speedControl_stk,
                   TASK_STACKSIZE,
                   NULL,
-                  0); */
-
-  OSTaskCreateExt(MNV_Queue_Test,
-                    NULL,
-                    &speedControl_stk[TASK_STACKSIZE-1],
-                    TASK_SPD_CTRL_PRIORITY,
-                    TASK_SPD_CTRL_PRIORITY,
-                    speedControl_stk,
-                    TASK_STACKSIZE,
-                    NULL,
-                    0);
+                  0);*/
 
   /*OSTaskCreateExt(step_response,
                     NULL,
@@ -926,36 +936,49 @@ int main(void)
   return 0;
 }
 
-/******************************************************************************
-*                                                                             *
-* License Agreement                                                           *
-*                                                                             *
-* Copyright (c) 2004 Altera Corporation, San Jose, California, USA.           *
-* All rights reserved.                                                        *
-*                                                                             *
-* Permission is hereby granted, free of charge, to any person obtaining a     *
-* copy of this software and associated documentation files (the "Software"),  *
-* to deal in the Software without restriction, including without limitation   *
-* the rights to use, copy, modify, merge, publish, distribute, sublicense,    *
-* and/or sell copies of the Software, and to permit persons to whom the       *
-* Software is furnished to do so, subject to the following conditions:        *
-*                                                                             *
-* The above copyright notice and this permission notice shall be included in  *
-* all copies or substantial portions of the Software.                         *
-*                                                                             *
-* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR  *
-* IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,    *
-* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE *
-* AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER      *
-* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING     *
-* FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER         *
-* DEALINGS IN THE SOFTWARE.                                                   *
-*                                                                             *
-* This agreement shall be governed in all respects by the laws of the State   *
-* of California and by the laws of the United States of America.              *
-* Altera does not recommend, suggest or require that this reference design    *
-* file be used in conjunction or combination with any other product.          *
-******************************************************************************/
+INT16S calcSteeringOffset(INT16S steeringValue)
+{
+	INT16S pwmSteeringOffset = steeringValue / 2;
+
+	set_duty_cycle(pRearRightDutySet, g_i16s_PWMSpeedCtrl);
+	set_duty_cycle(pFrontRightDutySet, g_i16s_PWMSpeedCtrl);
+	set_duty_cycle(pRearLeftDutySet, g_i16s_PWMSpeedCtrl);
+	set_duty_cycle(pFrontLeftDutySet, g_i16s_PWMSpeedCtrl);
+
+	if(pwmSteeringOffset > 0)	// steer right
+	{
+		if(g_i16s_PWMSpeedCtrl > 50)
+		{
+			set_duty_cycle(pRearRightDutySet, g_i16s_PWMSpeedCtrl-pwmSteeringOffset);
+			set_duty_cycle(pFrontRightDutySet, g_i16s_PWMSpeedCtrl-pwmSteeringOffset);
+			printf("g_i16s_PWMSpeedCtrl-pwmSteeringOffset: %d\n", g_i16s_PWMSpeedCtrl-pwmSteeringOffset);
+		}
+		else
+		{
+			set_duty_cycle(pRearLeftDutySet, g_i16s_PWMSpeedCtrl+pwmSteeringOffset);
+			set_duty_cycle(pFrontLeftDutySet, g_i16s_PWMSpeedCtrl+pwmSteeringOffset);
+			printf("g_i16s_PWMSpeedCtrl+pwmSteeringOffset: %d\n", g_i16s_PWMSpeedCtrl+pwmSteeringOffset);
+		}
+	}
+	else	// steer left
+	{
+		if(g_i16s_PWMSpeedCtrl > 50)
+		{
+			set_duty_cycle(pRearLeftDutySet, g_i16s_PWMSpeedCtrl+pwmSteeringOffset);
+			set_duty_cycle(pFrontLeftDutySet, g_i16s_PWMSpeedCtrl+pwmSteeringOffset);
+			printf("g_i16s_PWMSpeedCtrl+pwmSteeringOffset: %d\n", g_i16s_PWMSpeedCtrl+pwmSteeringOffset);
+		}
+		else
+		{
+			set_duty_cycle(pRearRightDutySet, g_i16s_PWMSpeedCtrl-pwmSteeringOffset);
+			set_duty_cycle(pFrontRightDutySet, g_i16s_PWMSpeedCtrl-pwmSteeringOffset);
+			printf("g_i16s_PWMSpeedCtrl-pwmSteeringOffset: %d\n", g_i16s_PWMSpeedCtrl-pwmSteeringOffset);
+		}
+	}
+
+	printf("pwmSteeringOffset: %d\n", pwmSteeringOffset);
+	return pwmSteeringOffset;
+}
 #endif
 
 #ifdef TEST

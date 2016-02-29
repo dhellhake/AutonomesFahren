@@ -13,27 +13,33 @@
 #define OS_TICKS_PER_USEC (OS_TICKS_PER_SEC/1000000)
 #define OS_TICKS_PER_MSEC (OS_TICKS_PER_SEC/1000)
 
-#define SPD_CTRL_CYCLE_TIME_MS 100
+#define SPD_CTRL_CYCLE_TIME_MS 200
+#define STP_RESP_CYCLE_TIME_MS 100
 
-INT32S desired_speed = 300;
-INT16S Kp_SpeedCtrl_num = 1;
-INT16S Kp_SpeedCtrl_den = 1;
-INT16S Ki_SpeedCtrl_num = 0;
-INT16S Ki_SpeedCtrl_den = 1;
+INT32S desired_speed = 500;
+INT16S Kp_SpeedCtrl_num = 296;
+INT16S Kp_SpeedCtrl_den = 1000;
+INT16S Ki_SpeedCtrl_num = 897;
+INT16S Ki_SpeedCtrl_den = 1000;
 INT16S Kd_SpeedCtrl_num = 0;
-INT16S Kd_SpeedCtrl_den = 1;
-INT32S I_SpeedCtrl_min = -10000;
-INT32S I_SpeedCtrl_max = 10000;
+INT16S Kd_SpeedCtrl_den = 1000;
+INT32S I_SpeedCtrl_min = -100;//-10000;
+INT32S I_SpeedCtrl_max = 100;//10000;
 INT32S P_SpeedCtrl = 0;
 INT32S I_SpeedCtrl = 0;
 INT32S D_SpeedCtrl = 0;
-INT16S PWM_SpeedCtrl = 0;
+INT16S g_i16s_PWMSpeedCtrl = 0;
 INT16S Fast_Forward_Control = 0;
 INT32S I_SpeedCtrl_error = 0;
 INT32U speed = 0;
 INT32S e_speed = 0;
-INT16S PWM_SpeedCtrl_max = 100;
+INT32S e_speed_old = 0;
+INT16S PWM_SpeedCtrl_max = 80;
 INT16S PWM_SpeedCtrl_min = 0;
+
+INT32S step_size = 50;
+
+INT16S calcSteeringOffset(INT16S steeringValue);
 
 typedef enum
 {
