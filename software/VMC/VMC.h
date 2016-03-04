@@ -5,6 +5,15 @@
 #include <io.h>
 #include "head.h"
 #include "includes.h"
+#include "time.h"
+#include "MPU6050/mpu6050.h"
+#include <iostream>
+#include <cstdlib>
+#include "altera_up_avalon_rs232.h"
+#include "system.h"
+#include "VMClib/VMClib.h"
+//#include "head.c"
+//#include "VMClib/VMClib.c"
 
 #define WHL_CIRCUMFERENCE 		200 // [mm]
 #define WHL_TICKS_PER_REVOLUTION 	20 // [whl_tick]
@@ -16,30 +25,27 @@
 #define SPD_CTRL_CYCLE_TIME_MS 200
 #define STP_RESP_CYCLE_TIME_MS 100
 
-INT32S desired_speed = 500;
-INT16S Kp_SpeedCtrl_num = 296;
-INT16S Kp_SpeedCtrl_den = 1000;
-INT16S Ki_SpeedCtrl_num = 897;
-INT16S Ki_SpeedCtrl_den = 1000;
-INT16S Kd_SpeedCtrl_num = 0;
-INT16S Kd_SpeedCtrl_den = 1000;
-INT32S I_SpeedCtrl_min = -100;//-10000;
-INT32S I_SpeedCtrl_max = 100;//10000;
-INT32S P_SpeedCtrl = 0;
-INT32S I_SpeedCtrl = 0;
-INT32S D_SpeedCtrl = 0;
-INT16S g_i16s_PWMSpeedCtrl = 0;
-INT16S Fast_Forward_Control = 0;
-INT32S I_SpeedCtrl_error = 0;
-INT32U speed = 0;
-INT32S e_speed = 0;
-INT32S e_speed_old = 0;
-INT16S PWM_SpeedCtrl_max = 80;
-INT16S PWM_SpeedCtrl_min = 0;
-
-INT32S step_size = 50;
-
-INT16S calcSteeringOffset(INT16S steeringValue);
+extern INT32S desired_speed;
+extern INT16S Kp_SpeedCtrl_num;
+extern INT16S Kp_SpeedCtrl_den;
+extern INT16S Ki_SpeedCtrl_num;
+extern INT16S Ki_SpeedCtrl_den;
+extern INT16S Kd_SpeedCtrl_num;
+extern INT16S Kd_SpeedCtrl_den;
+extern INT32S I_SpeedCtrl_min;//-10000;
+extern INT32S I_SpeedCtrl_max;//10000;
+extern INT32S P_SpeedCtrl;
+extern INT32S I_SpeedCtrl;
+extern INT32S D_SpeedCtrl;
+extern INT16S g_i16s_PWMSpeedCtrl;
+extern INT16S Fast_Forward_Control;
+extern INT32S I_SpeedCtrl_error;
+extern INT32U speed;
+extern INT32S e_speed;
+extern INT32S e_speed_old;
+extern INT16S PWM_SpeedCtrl_max;
+extern INT16S PWM_SpeedCtrl_min;
+extern INT32S step_size;
 
 typedef enum
 {

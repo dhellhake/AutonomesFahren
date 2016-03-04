@@ -8,7 +8,9 @@
 #ifndef VCMLIB_H_
 #define VCMLIB_H_
 
-#include <system.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define MNV_QUEUE_BASE (0x80000000 | MANUER_QUEUE_BASE)
 
@@ -25,12 +27,17 @@ typedef struct
 	volatile mnv_item_t* _buffer;
 } mnv_queue_t;
 
-void MNV_IntQueue();
+extern void MNV_IntQueue();
 extern inline mnv_item_t* MNV_Queue_DeQueue();
 extern inline mnv_item_t* MNV_Queue_EnQueue(unsigned int type);
 extern inline unsigned int MNV_Queue_Item_Available();
+extern void MNV_Queue_Test(void *pdata);
+extern void speedControl(void *pdata);
+extern void uart(void *pdata);
+extern INT16S calcSteeringOffset(INT16S steeringValue);
 
-
-void MNV_Queue_Test(void *pdata);
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* VCMLIB_H_ */

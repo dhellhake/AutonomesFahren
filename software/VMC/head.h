@@ -9,6 +9,10 @@
 #ifndef HEAD_H_
 #define HEAD_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <system.h>
 #include <alt_types.h>
 
@@ -28,7 +32,7 @@
 #define REAR_LEFT_ENC_READ REAR_RIGHT_ENC_READ+4
 #define FRONT_LEFT_ENC_READ REAR_LEFT_ENC_READ+4
 
-#define PWM_RESOLUTION 1000
+#define PWM_RESOLUTION 10000
 
 #define WHEEL_READY_MASK 0x8000
 #define ALL_WHEEL_FWD_MASK 0x0055
@@ -135,5 +139,9 @@ volatile unsigned char *pI2CDataAvailable;
 
 void I2CWrite(unsigned char I2CAddr, unsigned char RegAddr, unsigned char data);
 void I2CRead(unsigned char I2CAddr, unsigned char RegAddr, unsigned int len, char* cBuff);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* HEAD_H_ */
