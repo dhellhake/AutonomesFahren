@@ -410,13 +410,16 @@ int main()
 	while (1)
 	{
 		printf("new\n");
-		while (*pHc_sr04 != 0xff);
+		while (*pHc_sr04 != ULTRA_SOUND_READY_ALL_MASK);
+		//while (*pHc_sr04 != (ULTRA_SOUND_0_READY_MASK | ULTRA_SOUND_1_READY_MASK));
 
 		//printf("2\n");
-		*pHc_sr04 = 0xC7;
+		*pHc_sr04 = (ULTRA_SOUND_0_TRIG_CMD | ULTRA_SOUND_1_TRIG_CMD);
+		//*pHc_sr04 = 0xC7;
 
 		//printf("3\n");
-		while (*pHc_sr04 != 0xff);
+		//while (*pHc_sr04 != (ULTRA_SOUND_0_READY_MASK | ULTRA_SOUND_1_READY_MASK));
+		while (*pHc_sr04 != ULTRA_SOUND_READY_ALL_MASK);
 		//delay(10000000);
 
 		for (i = 0; i < NUMBER_OF_ULTRA_SOUND_DEVICES; i++)

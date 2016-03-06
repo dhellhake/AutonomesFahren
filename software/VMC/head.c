@@ -1,4 +1,3 @@
-
 #include "head.h"
 
 void init(void)
