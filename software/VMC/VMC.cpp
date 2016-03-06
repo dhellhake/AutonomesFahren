@@ -29,9 +29,9 @@
 #define __cplusplus
 #define DEBUG
 #define DEBUG_SPD_CTRL
-//#define TEST
+#define TEST
 
-#ifndef TEST
+
 
 #include "VMC.h"
 
@@ -58,6 +58,8 @@ INT32S e_speed_old = 0;
 INT16S PWM_SpeedCtrl_max = 80;	// more than 80% PWM-DutyCycle leads to faulty values of the wheel encoders
 INT16S PWM_SpeedCtrl_min = 0;
 INT32S step_size = 50;
+
+#ifndef TEST
 
 /* Definition of Task Stacks */
 #define   TASK_STACKSIZE       2048
@@ -328,28 +330,10 @@ int main(void)
 
 #ifdef TEST
 
-#include <stdio.h>
-#include <io.h>
-#include "head.h"
-#include "head.c"
-
-
 //#define MOTOR_TEST
-//#define HC_SR04_TEST
-#define MPU_TEST
+#define HC_SR04_TEST
+//#define MPU_TEST
 //#define COMPASS_TEST
-
-typedef enum
-{
-	Ready,
-	SearchParkingSlot,
-	AntiClockRightAxis1,
-	BackwardApproach1,
-	AntiClock1,
-	AntiClock2,
-	BackwardApproach2,
-	parked
-} ParkingStateType_t;
 
 #ifdef __cplusplus
 typedef bool bool_t;
