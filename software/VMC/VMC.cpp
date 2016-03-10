@@ -1,37 +1,8 @@
-/*************************************************************************
-* Copyright (c) 2004 Altera Corporation, San Jose, California, USA.      *
-* All rights reserved. All use of this software and documentation is     *
-* subject to the License Agreement located at the end of this file below.*
-**************************************************************************
-* Description:                                                           *
-* The following is a simple hello world program running MicroC/OS-II.The * 
-* purpose of the design is to be a very simple application that just     *
-* demonstrates MicroC/OS-II running on NIOS II.The design doesn't account*
-* for issues such as checking system call return codes. etc.             *
-*                                                                        *
-* Requirements:                                                          *
-*   -Supported Example Hardware Platforms                                *
-*     Standard                                                           *
-*     Full Featured                                                      *
-*     Low Cost                                                           *
-*   -Supported Development Boards                                        *
-*     Nios II Development Board, Stratix II Edition                      *
-*     Nios Development Board, Stratix Professional Edition               *
-*     Nios Development Board, Stratix Edition                            *
-*     Nios Development Board, Cyclone Edition                            *
-*   -System Library Settings                                             *
-*     RTOS Type - MicroC/OS-II                                           *
-*     Periodic System Timer                                              *
-*   -Know Issues                                                         *
-*     If this design is run on the ISS, terminal output will take several*
-*     minutes per iteration.                                             *
-**************************************************************************/
+/* VMC.cpp */
 #define __cplusplus
 #define DEBUG
 #define DEBUG_SPD_CTRL
-#define TEST
-
-
+//#define TEST
 
 #include "VMC.h"
 
@@ -75,86 +46,53 @@ OS_STK    step_response_stk[TASK_STACKSIZE];
  * between 0 and 254. Priority level 0 is the
  * highest priority.
  */
-#define TASK_SPD_CTRL_PRIORITY		0
-#define TASK1_PRIORITY      		2
-#define TASK2_PRIORITY      		3
-#define TASK_UART_PRIORITY			4
-#define TASK_TEST_PRIORITY			5
-#define TASK_STP_RESP_PRIORITY		1
+#define TASK_SPD_CTRL_PRIORITY			0
+#define TASK_SENSOR_COLLECTOR_PRIORITY  2
+#define TASK2_PRIORITY      			3
+#define TASK_UART_PRIORITY				4
+#define TASK_TEST_PRIORITY				5
+#define TASK_STP_RESP_PRIORITY			1
 
-/* Prints "Hello World" and sleeps for three seconds */
 void sensorCollector(void* pdata)
 {
-	unsigned int i = 0;
-			unsigned int uiGapStartEnc = 0;
-			unsigned int uiSouthEastDis = 0;
-			short AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ, x, y, z;
-			char cBuff[32];
-			bool bGapStarted = false;
-			//ParkingStateType_t cs = Ready;
-			*pwm_enable = 0;
+	INT32U start_execution = 0;
+	INT32U timeToWait = 0;
 
-	I2CWrite(MPU_SLAVE_ADDRESS, 0x6b, 0x0);
-	I2CRead(MPU_SLAVE_ADDRESS, 0x75, 1, cBuff);
-	printf("WhoAmI = %x\n", (unsigned int)cBuff[0]);
-	while (1)
+	unsigned int ultraSoundSensors[8];
+	int sensorCounter = 0;
+	char emergencyStop = 0;
+
+	INT8U sensorIndex = 0x0;
+
+	/* only read out ultra sound device 0 */
+	sensorIndex = sensorIndex | ULTRA_SOUND_0_TRIG_CMD;
+
+	while(1)
 	{
-		// HC_SR04
-		printf("new\n");
-		while (*pHc_sr04 != 0xff);
-
-		//printf("2\n");
-		*pHc_sr04 = 0xC7;
-
-		//printf("3\n");
-		while (*pHc_sr04 != 0xff);
-		//delay(10000000);
-
-		for (i = 0; i < NUMBER_OF_ULTRA_SOUND_DEVICES; i++)
+		if (getMeanSensorDistance(ultraSoundSensors, sensorIndex) == 0)
 		{
+			for (sensorCounter = 0; sensorCounter < NUMBER_OF_ULTRA_SOUND_DEVICES; sensorCounter++)
+			{
+				printf("Sensor %i: %i [mm]\n", sensorCounter, ultraSoundSensors[sensorCounter]);
 
-			printf("%u = %u\n",i, MeasureDistance(i));
+				if(sensorCounter == 0)
+					if (ultraSoundSensors[sensorCounter] <= EMERGENCY_STOP_DISTANCE)
+					{
+						//TODO: We should raise a stop signal here
+						//printf("Emergency stop!!\n");
+						emergencyStop = 1;
+					}
+			}
+			*pEmergencyStop = emergencyStop;
+			emergencyStop = 0;
 		}
-		printf("\n\n");
-		//delay(10000000);
-		//printf("4\n");;
 
+		timeToWait = SENSOR_COLLECTOR_CYCLE_TIME_MS - (OSTimeGet() - start_execution);
 
-
-			AcX = AcY = AcZ = Tmp = GyX = GyY = GyZ = 0;
-
-			I2CRead(MPU_SLAVE_ADDRESS, 0x3B, 14, cBuff);
-
-			AcX = (cBuff[0] << 8) | (cBuff[1] & 0xff);
-			AcY = (cBuff[2] << 8) | (cBuff[3] & 0xff);
-			AcZ = cBuff[4] << 8 | (cBuff[5] & 0xff);
-			//AcZ = cBuff[5];
-
-			Tmp = (cBuff[6] << 8) | (cBuff[7] & 0xff);
-
-			GyX = (cBuff[8] << 8) | (cBuff[9] & 0xff);
-			GyY = (cBuff[10] << 8) | (cBuff[11] & 0xff);
-			GyZ = (cBuff[12] << 8) | (cBuff[13] & 0xff);
-
-			printf("AcX = %d\n", AcX);
-			printf("AcY = %d\n", AcY);
-			printf("AcZ = %d\n", AcZ);
-	//		printf("%u,%u\n", cBuff[4], (cBuff[5] & 0xff));
-
-			printf("Tmp = %f\n", (float)Tmp/340 + 36.53);
-
-			printf("GyX = %d\n", GyX);
-			printf("GyY = %d\n", GyY);
-			printf("GyZ = %d\n", GyZ);
-
-			//delay(10000000);
-
-
-	printf("Hello from task sensorCollector\n");
-	OSTimeDlyHMSM(0, 0, 3, 0);
-  }
+		if(timeToWait > 0)
+			OSTimeDlyHMSM(0, 0, 0, timeToWait);
+	}
 }
-
 
 /*
 void task_15ms(void* pdata)
@@ -217,11 +155,6 @@ void test(void* pdata)
 	}*/
 }
 
-
-
-
-
-
 /* The main function creates two task and starts multi-tasking */
 int main(void)
 {
@@ -229,6 +162,8 @@ int main(void)
   init();
 
   OSInit();
+
+  initVMC();
 
   /* Create Semaphor */
   //Sem = OSSemCreate(1);
@@ -261,18 +196,8 @@ int main(void)
 
   /* Clear Conext Switch Counter */
   //OSCtxSwCtr = 0;
-
- /* OSTaskCreateExt(sensorCollector,
-                      NULL,
-                      (void *)&sensorCollector_stk[TASK_STACKSIZE-1],
-                      TASK1_PRIORITY,
-                      TASK1_PRIORITY,
-                      sensorCollector_stk,
-                      TASK_STACKSIZE,
-                      NULL,
-                      0);*/
                
-   /*OSTaskCreateExt(speedControl,
+ OSTaskCreateExt(speedControl,
                   NULL,
                   &speedControl_stk[TASK_STACKSIZE-1],
                   TASK_SPD_CTRL_PRIORITY,
@@ -280,19 +205,19 @@ int main(void)
                   speedControl_stk,
                   TASK_STACKSIZE,
                   NULL,
-                  0);*/
+                  0);
 
-  /*OSTaskCreateExt(step_response,
-                    NULL,
-                    &step_response_stk[TASK_STACKSIZE-1],
-                    TASK_STP_RESP_PRIORITY,
-                    TASK_STP_RESP_PRIORITY,
-                    step_response_stk,
-                    TASK_STACKSIZE,
-                    NULL,
-                    0);*/
+ OSTaskCreateExt(sensorCollector,
+                      NULL,
+                      &sensorCollector_stk[TASK_STACKSIZE-1],
+                      TASK_SENSOR_COLLECTOR_PRIORITY,
+                      TASK_SENSOR_COLLECTOR_PRIORITY,
+                      sensorCollector_stk,
+                      TASK_STACKSIZE,
+                      NULL,
+                      0);
 
-  /*OSTaskCreateExt(step_response,
+  /*OSTaskCreateExt(test,
                     NULL,
                     &test_stk[TASK_STACKSIZE-1],
                     TASK_TEST_PRIORITY,
@@ -301,26 +226,6 @@ int main(void)
                     TASK_STACKSIZE,
                     NULL,
                     0);*/
-
-  /*OSTaskCreateExt(uart,
-                    NULL,
-                    &uart_stk[TASK_STACKSIZE-1],
-                    TASK_UART_PRIORITY,
-                    TASK_UART_PRIORITY,
-                    uart_stk,
-                    TASK_STACKSIZE,
-                    NULL,
-                    0);*/
-
-  OSTaskCreateExt(test,
-                    NULL,
-                    &test_stk[TASK_STACKSIZE-1],
-                    TASK_TEST_PRIORITY,
-                    TASK_TEST_PRIORITY,
-                    test_stk,
-                    TASK_STACKSIZE,
-                    NULL,
-                    0);
 
   OSStart();
   return 0;

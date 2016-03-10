@@ -264,3 +264,76 @@ void step_response(void *pdata)
 				OSTimeDlyHMSM(0, 0, 0, timeToWait);
 		}
 }
+
+/* Prints "Hello World" and sleeps for three seconds */
+void sensorCollectorSample(void* pdata)
+{
+	unsigned int i = 0;
+			unsigned int uiGapStartEnc = 0;
+			unsigned int uiSouthEastDis = 0;
+			short AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ, x, y, z;
+			char cBuff[32];
+			bool bGapStarted = false;
+			//ParkingStateType_t cs = Ready;
+			*pwm_enable = 0;
+
+	I2CWrite(MPU_SLAVE_ADDRESS, 0x6b, 0x0);
+	I2CRead(MPU_SLAVE_ADDRESS, 0x75, 1, cBuff);
+	printf("WhoAmI = %x\n", (unsigned int)cBuff[0]);
+	while (1)
+	{
+		// HC_SR04
+		printf("new\n");
+		while (*pHc_sr04 != 0xff);
+
+		//printf("2\n");
+		*pHc_sr04 = 0xC7;
+
+		//printf("3\n");
+		while (*pHc_sr04 != 0xff);
+		//delay(10000000);
+
+		for (i = 0; i < NUMBER_OF_ULTRA_SOUND_DEVICES; i++)
+		{
+
+			printf("%u = %u\n",i, MeasureDistance(i));
+		}
+		printf("\n\n");
+		//delay(10000000);
+		//printf("4\n");;
+
+
+
+			AcX = AcY = AcZ = Tmp = GyX = GyY = GyZ = 0;
+
+			I2CRead(MPU_SLAVE_ADDRESS, 0x3B, 14, cBuff);
+
+			AcX = (cBuff[0] << 8) | (cBuff[1] & 0xff);
+			AcY = (cBuff[2] << 8) | (cBuff[3] & 0xff);
+			AcZ = cBuff[4] << 8 | (cBuff[5] & 0xff);
+			//AcZ = cBuff[5];
+
+			Tmp = (cBuff[6] << 8) | (cBuff[7] & 0xff);
+
+			GyX = (cBuff[8] << 8) | (cBuff[9] & 0xff);
+			GyY = (cBuff[10] << 8) | (cBuff[11] & 0xff);
+			GyZ = (cBuff[12] << 8) | (cBuff[13] & 0xff);
+
+			printf("AcX = %d\n", AcX);
+			printf("AcY = %d\n", AcY);
+			printf("AcZ = %d\n", AcZ);
+	//		printf("%u,%u\n", cBuff[4], (cBuff[5] & 0xff));
+
+			printf("Tmp = %f\n", (float)Tmp/340 + 36.53);
+
+			printf("GyX = %d\n", GyX);
+			printf("GyY = %d\n", GyY);
+			printf("GyZ = %d\n", GyZ);
+
+			//delay(10000000);
+
+
+	printf("Hello from task sensorCollector\n");
+	OSTimeDlyHMSM(0, 0, 3, 0);
+  }
+}

@@ -7,6 +7,13 @@
 
 #include "../VMC.h"
 
+void initVMC(void)
+{
+	initUltrasoundSensors();
+
+	pEmergencyStop = (volatile unsigned int*)(STATE_CMD_MEMORY_BASE);
+}
+
 void uart(void *pdata)
 {
 	int i = 0;
@@ -329,6 +336,15 @@ void speedControl(void *pdata)
 		/* increment index variable for moving on mean calculation */
 		i = i + 1;
 
+		if(*pEmergencyStop == 1)
+		{
+			printf("EmergencyStop: %d\n", *pEmergencyStop);
+			set_duty_cycle( pFrontRightDutySet, 0);
+			set_duty_cycle(pRearRightDutySet, 0);
+			set_duty_cycle(pRearLeftDutySet, 0);
+			set_duty_cycle(pFrontLeftDutySet, 0);
+		}
+
 		timeToWait = SPD_CTRL_CYCLE_TIME_MS - (OSTimeGet() - start_execution);
 
 		/* if actual execution time is less than intended
@@ -391,4 +407,88 @@ INT16S calcSteeringOffset(INT16S steeringValue)
 	printf("pwmSteeringOffset: %d\n", pwmSteeringOffset);
 #endif
 	return pwmSteeringOffset;
+}
+
+void initUltrasoundSensors()
+{
+	int i = 0;
+	int j = 0;
+	for (i = 0; i < NUMBER_OF_ULTRA_SOUND_DEVICES; i++) {
+		values[i].counter = 0;
+		for (j = 0; j < NUMBER_MEAN_VALUES; j++) {
+			values[i].ultraSoundValues[j] = 0;
+		}
+	}
+}
+
+void startMeasurement(INT8U sensorIndex)
+{
+	*pHc_sr04 |= sensorIndex;
+}
+
+void makeMeasurement()
+{
+	*pHc_sr04 = 0xff;
+}
+
+char getMeanSensorDistance(unsigned int *means, INT8U sensorIndex)
+{
+	unsigned int mean = 0;
+	unsigned int sensor = 0;
+	unsigned int x;
+	unsigned int oldDist = 0;
+	unsigned int absDist = 0;
+
+	int i = 0;
+	if (*pHc_sr04 != 0xff)
+	{
+		startMeasurement(sensorIndex);
+
+		return -1;
+	}
+
+	for (sensor = 0; sensor < NUMBER_OF_ULTRA_SOUND_DEVICES; sensor++)
+	{
+		x = MeasureDistance(sensor);
+
+		if (values[sensor].counter == 0)
+		{
+			oldDist = values[sensor].ultraSoundValues[3];
+		}
+		else
+		{
+			oldDist = values[sensor].ultraSoundValues[values[sensor].counter-1];
+		}
+
+		//Filter out not plausible values
+		absDist = oldDist>x ? oldDist - x : x - oldDist;
+		//printf("%u = %u\n", sensor, absDist);
+
+		if (oldDist!=0 && absDist > ERROR_TOLERANCE)
+		{
+			x = oldDist;
+		}
+
+		values[sensor].ultraSoundValues[values[sensor].counter] = x;
+		//printf("%u = %u\n", sensor, x);
+
+		if (values[sensor].counter >= 3)
+		{
+			values[sensor].counter = 0;
+		}
+		else
+		{
+			values[sensor].counter++;
+		}
+		//printf("Sensor counter: %d\n", values[sensor].counter);
+		mean = 0;
+		for (i = 0; i < NUMBER_MEAN_VALUES; i++)
+		{
+			mean += values[sensor].ultraSoundValues[i];
+		}
+		means[sensor] = mean >> 2;
+	}
+
+	startMeasurement(sensorIndex);
+	return 0;
 }

@@ -35,6 +35,25 @@ extern void MNV_Queue_Test(void *pdata);
 extern void speedControl(void *pdata);
 extern void uart(void *pdata);
 extern INT16S calcSteeringOffset(INT16S steeringValue);
+//char getMeanSensorDistance(unsigned int *means);
+char getMeanSensorDistance(unsigned int *means, INT8U sensorIndex);
+void makeMeasurement();
+void startMeasurement(INT8U sensorIndex);
+void initUltrasoundSensors();
+void initVMC(void);
+
+volatile unsigned int *pEmergencyStop;
+
+#define NUMBER_MEAN_VALUES 4
+#define ERROR_TOLERANCE 1000
+
+typedef struct SensorValue
+{
+	unsigned int ultraSoundValues[NUMBER_MEAN_VALUES];
+	int counter;
+}SENSOR_VALUE;
+
+SENSOR_VALUE values[NUMBER_OF_ULTRA_SOUND_DEVICES];
 
 #ifdef __cplusplus
 }

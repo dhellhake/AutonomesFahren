@@ -24,6 +24,9 @@
 
 #define SPD_CTRL_CYCLE_TIME_MS 200
 #define STP_RESP_CYCLE_TIME_MS 100
+#define SENSOR_COLLECTOR_CYCLE_TIME_MS 100
+
+#define EMERGENCY_STOP_DISTANCE 50
 
 extern INT32S desired_speed;
 extern INT16S Kp_SpeedCtrl_num;
