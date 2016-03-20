@@ -1,12 +1,19 @@
-/* VMC.cpp */
-#define __cplusplus
+/* VMC.c */
+/** @file
+ * @brief main file of vehicle management and control
+ */
+
 #define DEBUG
 #define DEBUG_SPD_CTRL
 //#define TEST
 
 #include "VMC.h"
+#include "DMP/MPU6050.h"
+#include "DMP/helper_3dmathc.h"
 
+#ifdef __cplusplus
 using namespace std;
+#endif
 
 INT32S desired_speed = 500;
 INT16S Kp_SpeedCtrl_num = 296;

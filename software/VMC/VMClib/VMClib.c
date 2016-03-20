@@ -1,8 +1,12 @@
-/*
+/**
  * VCMlib.c
  *
  *  Created on: 07.01.2016
  *      Author: Dominik Hellhake (3662000)
+ *
+ *@file
+ *@brief main file of vehicle management and control
+ *
  */
 
 #include "../VMC.h"
@@ -11,7 +15,7 @@ void initVMC(void)
 {
 	initUltrasoundSensors();
 
-	pEmergencyStop = (volatile unsigned int*)(STATE_CMD_MEMORY_BASE);
+	pEmergencyStop = (volatile unsigned int*)(STATE_CMD_MEMORY_BASE | 0x04);
 }
 
 void uart(void *pdata)
