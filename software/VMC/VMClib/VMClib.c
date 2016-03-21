@@ -441,6 +441,10 @@ INT16S calcSteeringOffset(INT16S steeringValue)
 	return pwmSteeringOffset;
 }
 
+/*
+ * Initialisation for Ultrasound sensors with 0 values
+ * (necessary before making measurements)
+ */
 void initUltrasoundSensors() {
 	int i = 0;
 	int j = 0;
@@ -452,10 +456,18 @@ void initUltrasoundSensors() {
 	}
 }
 
+/*
+ * Set sensor mask to make a ultrasound message from all sensors
+ */
 void makeMeasurement() {
 	*pHc_sr04 = 0xff;
 }
 
+/*
+ * get calculated mean sensor distance values (simple mean value filter)
+ * @param unsigned int *means
+ * 	pointer to store the calculated mean values into
+ */
 char getMeanSensorDistance(unsigned int *means) {
 	unsigned int mean = 0;
 	unsigned int sensor = 0;
