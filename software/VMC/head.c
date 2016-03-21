@@ -15,7 +15,7 @@ void init(void)
 	pRearLeftDutySet = (volatile unsigned int*)(0x80000000 | REAR_LEFT_DUTY_SET);
 	pFrontLeftDutySet = (volatile unsigned int*)(0x80000000 | FRONT_LEFT_DUTY_SET);
 
-	pFrontRightEncSet = (volatile unsigned int*)(0x80000000 |FRONT_RIGHT_ENC_SET);
+	pFrontRightEncSet = (volatile unsigned int*)(0x80000000 | FRONT_RIGHT_ENC_SET);
 	pRearRightEncSet = (volatile unsigned int*)(0x80000000 | REAR_RIGHT_ENC_SET);
 	pRearLeftEncSet = (volatile unsigned int*)(0x80000000 | REAR_LEFT_ENC_SET);
 	pFrontLeftEncSet = (volatile unsigned int*)(0x80000000 | FRONT_LEFT_ENC_SET);

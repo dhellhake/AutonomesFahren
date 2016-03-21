@@ -25,9 +25,9 @@
 
 #define SPD_CTRL_CYCLE_TIME_MS 200
 #define STP_RESP_CYCLE_TIME_MS 100
-#define SENSOR_COLLECTOR_CYCLE_TIME_MS 100
+#define SENSOR_COLLECTOR_CYCLE_TIME_MS 60
 
-#define EMERGENCY_STOP_DISTANCE 50
+#define EMERGENCY_STOP_DISTANCE 100
 
 extern INT32S desired_speed;
 extern INT16S Kp_SpeedCtrl_num;
@@ -50,6 +50,7 @@ extern INT32S e_speed_old;
 extern INT16S PWM_SpeedCtrl_max;
 extern INT16S PWM_SpeedCtrl_min;
 extern INT32S step_size;
+extern OS_EVENT *mutex;
 
 typedef enum
 {

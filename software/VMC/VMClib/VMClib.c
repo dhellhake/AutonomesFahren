@@ -13,41 +13,18 @@
 
 void initVMC(void)
 {
+	INT8U return_code = OS_NO_ERR;
+
 	initUltrasoundSensors();
 
 	pEmergencyStop = (volatile unsigned int*)(STATE_CMD_MEMORY_BASE | 0x04);
+
+	//mutex = OSMutexCreate(MUTEX_PRIORITY, &return_code);
 }
 
-void uart(void *pdata)
-{
-	int i = 0;
-	alt_u8 testStr[] = "Hello\n1";
-	alt_u8 parityErr = 0;
-	alt_up_rs232_dev *pUart;
+#include "../VMC.h"
+#include "VMClib.h"
 
-	while (1)
-	  {
-	    pUart = alt_up_rs232_open_dev("/dev/rs232_0");
-
-	    printf("%x\n", pUart->base);
-	    for (i = 0; i < 7; i++)
-	    {
-	        alt_u8 c;
-	        alt_up_rs232_write_data(pUart, testStr[i]); // externally looped back
-	    }
-	    OSTimeDlyHMSM(0, 0, 1, 0);
-
-	    /*for (i = 0; i < 7; )
-	        {
-	            alt_u8 c;
-	            if (alt_up_rs232_read_data(pUart, &c, &parityErr) == 0)
-	            {
-	                printf("%c", c);
-	                i++;
-	            }
-	        }*/
-	  }
-}
 
 void MNV_InitQueue()
 {
@@ -126,6 +103,52 @@ void MNV_Queue_Test(void *pdata)
 
 		printf("%d \n", testItem->_type);
 	}
+}
+
+
+snr_sonic_t* SONICGetState(enum SONIC_SENSOR_POS position)
+{
+	return (snr_sonic_t *) (SNR_SONIC_BASE + (sizeof(snr_sonic_t) * (int)position));
+}
+void SONICSetState(int distance, enum SONIC_SENSOR_POS position)
+{
+	snr_sonic_t* currentSonic = (snr_sonic_t *) (SNR_SONIC_BASE * (int)position);
+
+	currentSonic->_distance = distance;
+	currentSonic->_position = position;
+	//currentSonic->_timestamp =
+}
+
+
+act_wheel_t* WHLGetState()
+{
+	return (act_wheel_t *) ACT_WHL_BASE;
+}
+void WHLSetState(int ticks, int distance, enum WHEEL_POS position)
+{
+	act_wheel_t* currentWhl = (act_wheel_t *) (SNR_DMP_BASE * (int)position);
+
+	currentWhl->_distance = distance;
+	currentWhl->_ticks = ticks;
+	//currentWhl->_timestamp =
+}
+
+
+snr_dmp_t* DMPGetValueSet()
+{
+	return (snr_dmp_t *) SNR_DMP_BASE;
+}
+void DMPSetValueSet(int yaw, int pitch, int roll, int accX, int accY, int accZ)
+{
+	snr_dmp_t* currentSet = (snr_dmp_t *) SNR_DMP_BASE;
+
+	currentSet->_yaw = yaw;
+	currentSet->_pitch = pitch;
+	currentSet->_roll = roll;
+	currentSet->_accX = accX;
+	currentSet->_accY = accY;
+	currentSet->_accZ = accZ;
+	//currentSet->_timestamp =
 }
 
 /* Task for Speed Control with PID-Regulator */
@@ -413,8 +436,7 @@ INT16S calcSteeringOffset(INT16S steeringValue)
 	return pwmSteeringOffset;
 }
 
-void initUltrasoundSensors()
-{
+void initUltrasoundSensors() {
 	int i = 0;
 	int j = 0;
 	for (i = 0; i < NUMBER_OF_ULTRA_SOUND_DEVICES; i++) {
@@ -425,18 +447,12 @@ void initUltrasoundSensors()
 	}
 }
 
-void startMeasurement(INT8U sensorIndex)
-{
-	*pHc_sr04 |= sensorIndex;
-}
-
-void makeMeasurement()
-{
+void makeMeasurement() {
+	printf("HC SR04: 0x%x", *pHc_sr04);
 	*pHc_sr04 = 0xff;
 }
 
-char getMeanSensorDistance(unsigned int *means, INT8U sensorIndex)
-{
+char getMeanSensorDistance(unsigned int *means) {
 	unsigned int mean = 0;
 	unsigned int sensor = 0;
 	unsigned int x;
@@ -444,55 +460,40 @@ char getMeanSensorDistance(unsigned int *means, INT8U sensorIndex)
 	unsigned int absDist = 0;
 
 	int i = 0;
-	if (*pHc_sr04 != 0xff)
-	{
-		startMeasurement(sensorIndex);
+	if (*pHc_sr04 != 0xff) {
+		makeMeasurement();
+		printf("Sensors not ready! HC SR04: 0x%x\n", *pHc_sr04);
 
 		return -1;
 	}
-
-	for (sensor = 0; sensor < NUMBER_OF_ULTRA_SOUND_DEVICES; sensor++)
-	{
+	for (sensor = 0; sensor < NUMBER_OF_ULTRA_SOUND_DEVICES; sensor++) {
 		x = MeasureDistance(sensor);
-
-		if (values[sensor].counter == 0)
-		{
+		if (values[sensor].counter == 0) {
 			oldDist = values[sensor].ultraSoundValues[3];
-		}
-		else
-		{
+		} else {
 			oldDist = values[sensor].ultraSoundValues[values[sensor].counter-1];
 		}
-
 		//Filter out not plausible values
 		absDist = oldDist>x ? oldDist - x : x - oldDist;
 		//printf("%u = %u\n", sensor, absDist);
-
-		if (oldDist!=0 && absDist > ERROR_TOLERANCE)
-		{
+		if (oldDist!=0 && absDist > ERROR_TOLERANCE) {
 			x = oldDist;
 		}
-
 		values[sensor].ultraSoundValues[values[sensor].counter] = x;
 		//printf("%u = %u\n", sensor, x);
-
-		if (values[sensor].counter >= 3)
-		{
+		if (values[sensor].counter >= 3) {
 			values[sensor].counter = 0;
-		}
-		else
-		{
+		} else {
 			values[sensor].counter++;
 		}
 		//printf("Sensor counter: %d\n", values[sensor].counter);
 		mean = 0;
-		for (i = 0; i < NUMBER_MEAN_VALUES; i++)
-		{
+		for (i = 0; i < NUMBER_MEAN_VALUES; i++) {
 			mean += values[sensor].ultraSoundValues[i];
 		}
 		means[sensor] = mean >> 2;
 	}
 
-	startMeasurement(sensorIndex);
+	makeMeasurement();
 	return 0;
 }

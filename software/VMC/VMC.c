@@ -36,6 +36,7 @@ INT32S e_speed_old = 0;
 INT16S PWM_SpeedCtrl_max = 80;	// more than 80% PWM-DutyCycle leads to faulty values of the wheel encoders
 INT16S PWM_SpeedCtrl_min = 0;
 INT32S step_size = 50;
+OS_EVENT *mutex = NULL;
 
 #ifndef TEST
 
@@ -53,30 +54,28 @@ OS_STK    step_response_stk[TASK_STACKSIZE];
  * between 0 and 254. Priority level 0 is the
  * highest priority.
  */
-#define TASK_SPD_CTRL_PRIORITY			0
-#define TASK_SENSOR_COLLECTOR_PRIORITY  2
+#define TASK_SPD_CTRL_PRIORITY			2
+#define TASK_SENSOR_COLLECTOR_PRIORITY  1
 #define TASK2_PRIORITY      			3
 #define TASK_UART_PRIORITY				4
-#define TASK_TEST_PRIORITY				5
-#define TASK_STP_RESP_PRIORITY			1
+#define TASK_TEST_PRIORITY				1
+#define TASK_STP_RESP_PRIORITY			6
 
-void sensorCollector(void* pdata)
+void sensorCollector2(void* pdata)
 {
-	INT32U start_execution = 0;
-	INT32U timeToWait = 0;
+	// make signed variable because of timeToWait calculation could be negative
+	INT32S start_execution = 0;
+	INT32S timeToWait = 0;
 
 	unsigned int ultraSoundSensors[8];
 	int sensorCounter = 0;
 	char emergencyStop = 0;
 
-	INT8U sensorIndex = 0x0;
-
-	/* only read out ultra sound device 0 */
-	sensorIndex = sensorIndex | ULTRA_SOUND_0_TRIG_CMD;
-
 	while(1)
 	{
-		if (getMeanSensorDistance(ultraSoundSensors, sensorIndex) == 0)
+		start_execution = OSTimeGet();
+
+		/*if (getMeanSensorDistance(ultraSoundSensors) == 0)
 		{
 			for (sensorCounter = 0; sensorCounter < NUMBER_OF_ULTRA_SOUND_DEVICES; sensorCounter++)
 			{
@@ -90,34 +89,66 @@ void sensorCollector(void* pdata)
 						emergencyStop = 1;
 					}
 			}
-			*pEmergencyStop = emergencyStop;
+			//*pEmergencyStop = emergencyStop;
 			emergencyStop = 0;
 		}
 
+		//delay(100000);*/
+
 		timeToWait = SENSOR_COLLECTOR_CYCLE_TIME_MS - (OSTimeGet() - start_execution);
+		printf("timeToWait: %i\n", timeToWait);
 
 		if(timeToWait > 0)
 			OSTimeDlyHMSM(0, 0, 0, timeToWait);
 	}
 }
 
-/*
-void task_15ms(void* pdata)
+
+void sensorCollector(void* pdata)
 {
+	INT32U start_execution;
+	INT32U timeToWait;
+
+	unsigned int ultraSoundSensors[8];
+	int sensorCounter = 0;
+	char emergencyStop = 0;
+
+	INT8U return_code = OS_NO_ERR;
+
 	while (1)
 	{
-		INT32U start_execution = OSTimeGet();
+		start_execution = OSTimeGet();
 
-		INT8U devID = getDeviceID();
-		printf("GyZ = %d\n", devID);
+		if (getMeanSensorDistance(ultraSoundSensors) == 0)
+		{
+			for (sensorCounter = 0; sensorCounter < NUMBER_OF_ULTRA_SOUND_DEVICES; sensorCounter++)
+			{
+#ifdef DEBUG
+				printf("Sensor %i: %i [mm]\n", sensorCounter, ultraSoundSensors[sensorCounter]);
+#endif
 
+				//OSMutexPend(mutex, 0, &return_code);
+					//SONICSetState(ultraSoundSensors[sensorCounter], (enum SONIC_SENSOR_POS) sensorCounter);
+				//OSMutexPost(mutex);
 
+				if (ultraSoundSensors[sensorCounter] <= EMERGENCY_STOP_DISTANCE)
+				{
+					//TODO: We should raise a stop signal here
+#ifdef DEBUG
+					printf("Emergency stop!!\n");
+#endif
+					emergencyStop = 1;
+				}
+			}
+			*pEmergencyStop = emergencyStop;
+			emergencyStop = 0;
+		}
 
-		INT32U timeToWait = 15 - (OSTimeGet() - start_execution);
+		timeToWait = SENSOR_COLLECTOR_CYCLE_TIME_MS - (OSTimeGet() - start_execution);
 		if(timeToWait > 0)
 			OSTimeDlyHMSM(0, 0, 0, timeToWait);
 	}
-}*/
+}
 
 void test(void* pdata)
 {
@@ -165,12 +196,13 @@ void test(void* pdata)
 /* The main function creates two task and starts multi-tasking */
 int main(void)
 {
-  
-  init();
+    INT8U task_status = OS_NO_ERR;
 
-  OSInit();
+	OSInit();
 
-  initVMC();
+	init();
+
+	initVMC();
 
   /* Create Semaphor */
   //Sem = OSSemCreate(1);
@@ -204,7 +236,7 @@ int main(void)
   /* Clear Conext Switch Counter */
   //OSCtxSwCtr = 0;
                
- OSTaskCreateExt(speedControl,
+ /*OSTaskCreateExt(speedControl,
                   NULL,
                   &speedControl_stk[TASK_STACKSIZE-1],
                   TASK_SPD_CTRL_PRIORITY,
@@ -212,11 +244,11 @@ int main(void)
                   speedControl_stk,
                   TASK_STACKSIZE,
                   NULL,
-                  0);
+                  0);*/
 
- OSTaskCreateExt(sensorCollector,
+ task_status = OSTaskCreateExt(sensorCollector,
                       NULL,
-                      &sensorCollector_stk[TASK_STACKSIZE-1],
+                      (void *) &sensorCollector_stk[TASK_STACKSIZE-1],
                       TASK_SENSOR_COLLECTOR_PRIORITY,
                       TASK_SENSOR_COLLECTOR_PRIORITY,
                       sensorCollector_stk,
@@ -224,7 +256,9 @@ int main(void)
                       NULL,
                       0);
 
-  /*OSTaskCreateExt(test,
+ printf("task status: %i; OS_NO_ERROR: %i\n", task_status, OS_NO_ERR);
+
+  /*OSTaskCreateExt(task_500ms,
                     NULL,
                     &test_stk[TASK_STACKSIZE-1],
                     TASK_TEST_PRIORITY,
