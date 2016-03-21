@@ -12,9 +12,7 @@
 #include "altera_up_avalon_rs232.h"
 #include "system.h"
 #include "VMClib/VMClib.h"
-
-//#include "head.c"
-//#include "VMClib/VMClib.c"
+#include "DMP/helper_3dmathc.h"
 
 #define WHL_CIRCUMFERENCE 		200 // [mm]
 #define WHL_TICKS_PER_REVOLUTION 	20 // [whl_tick]

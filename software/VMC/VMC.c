@@ -3,7 +3,7 @@
  * @brief main file of vehicle management and control
  */
 
-//#define DEBUG
+#define DEBUG
 #define DEBUG_SPD_CTRL
 //#define TEST
 
@@ -109,11 +109,29 @@ void sensorCollector(void* pdata)
 	INT32U start_execution;
 	INT32U timeToWait;
 
+	// Ultrasound
 	unsigned int ultraSoundSensors[8];
 	int sensorCounter = 0;
+
+	// Emergency
 	char emergencyStop = 0;
 
+	// DMP
+	unsigned short dmpPacketSize = 0;
+	unsigned short fifoCount = 0;
+	unsigned char fifoBuffer[64];
+	unsigned char mpuStatus = 0;
+	CQuaternion q;
+	CVectorFloat gravity;
+	CVectorInt16 accl;
+	float yawPitchRol[3];
+
 	INT8U return_code = OS_NO_ERR;
+
+	// Start DMP/MPU
+	dmpPacketSize = mpuDmpGetFIFOPacketSize(myMPU);
+	mpuResetFIFO(myMPU);
+	mpuSetDMPEnabled(myMPU, 1);
 
 	while (1)
 	{

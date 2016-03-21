@@ -1,12 +1,9 @@
-/** @file
- *@brief I2CDev.cpp
-*/
-
 #include "I2CDev.h"
 
 extern "C" {
 #include "../head.h"
 }
+
 /** Default constructor.
  */
 I2Cdev::I2Cdev() {
@@ -150,10 +147,10 @@ void I2Cdev::writeByte(unsigned char I2CAddr, unsigned char RegAddr,
 void I2Cdev::writeWord(unsigned char I2CAddr, unsigned char RegAddr,
 		unsigned short data) {
 	readWriteWait();
-	I2CWrite(I2CAddr, RegAddr, (char) data);
+	I2CWrite(I2CAddr, RegAddr + 1, (char) data);
 	data >>= 8;
 	readWriteWait();
-	I2CWrite(I2CAddr, RegAddr + 1, (char) data);
+	I2CWrite(I2CAddr, RegAddr, (char) data);
 }
 
 void I2Cdev::writeBytes(unsigned char I2CAddr, unsigned char RegAddr,
@@ -182,7 +179,7 @@ void I2Cdev::writeWords(unsigned char I2CAddr, unsigned char RegAddr,
 }
 
 void I2Cdev::readWriteWait() {
-	int counter = 20000;
+	int counter = 2000;
 		while (counter > 0) {
 			counter--;
 		}

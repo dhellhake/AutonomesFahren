@@ -405,12 +405,9 @@ unsigned char MPU6050::dmpInitialize() {
 	char xgOffsetTC = getXGyroOffsetTC();
 	char ygOffsetTC = getYGyroOffsetTC();
 	char zgOffsetTC = getZGyroOffsetTC();
-	DEBUG_PRINT(F("X gyro offset = "));
-	DEBUG_PRINTLN(xgOffsetTC);
-	DEBUG_PRINT(F("Y gyro offset = "));
-	DEBUG_PRINTLN(ygOffsetTC);
-	DEBUG_PRINT(F("Z gyro offset = "));
-	DEBUG_PRINTLN(zgOffsetTC);
+	printf("X gyro offset = %d\n", xgOffsetTC);
+	printf("Y gyro offset = %d\n", ygOffsetTC);
+	printf("Z gyro offset = %d\n", zgOffsetTC);
 
 	// setup weird slave stuff (?)
 	DEBUG_PRINTLN(F("Setting slave 0 address to 0x7F..."));
@@ -427,8 +424,7 @@ unsigned char MPU6050::dmpInitialize() {
 		del--;
 	}
 	// load DMP code into memory banks
-	printf("Writing DMP code to MPU memory banks\n");
-	DEBUG_PRINT(MPU6050_DMP_CODE_SIZE);
+	printf("Writing DMP code to MPU memory banks \n%d", MPU6050_DMP_CODE_SIZE);
 	DEBUG_PRINTLN(F(" bytes)"));
 	//TODO: This is just for testing
 	waitCounterToInitializeMPU();
@@ -436,8 +432,7 @@ unsigned char MPU6050::dmpInitialize() {
 		printf("Success! DMP code written and verified.");
 
 		// write DMP configuration
-		DEBUG_PRINT(F("Writing DMP configuration to MPU memory banks ("));
-		DEBUG_PRINT(MPU6050_DMP_CONFIG_SIZE);
+		printf("Writing DMP configuration to MPU memory banks  \n%d", MPU6050_DMP_CONFIG_SIZE);
 		DEBUG_PRINTLN(F(" bytes in config def)"));
 		if (writeProgDMPConfigurationSet(dmpConfig, MPU6050_DMP_CONFIG_SIZE)) {
 			DEBUG_PRINTLN(
@@ -508,8 +503,7 @@ unsigned char MPU6050::dmpInitialize() {
 			unsigned short fifoCount = getFIFOCount();
 			unsigned char fifoBuffer[128];
 
-			DEBUG_PRINT(F("Current FIFO count="));
-			DEBUG_PRINTLN(fifoCount);
+			printf("Current FIFO count=%d\n", fifoCount);
 			getFIFOBytes(fifoBuffer, fifoCount);
 
 			DEBUG_PRINTLN(F("Setting motion detection threshold to 2..."));
@@ -568,8 +562,7 @@ unsigned char MPU6050::dmpInitialize() {
 			while ((fifoCount = getFIFOCount()) < 3)
 				;
 
-			DEBUG_PRINT(F("Current FIFO count="));
-			DEBUG_PRINTLN(fifoCount);
+			printf("Current FIFO count=%d\n", fifoCount);
 			DEBUG_PRINTLN(F("Reading FIFO data..."));
 			getFIFOBytes(fifoBuffer, fifoCount);
 
@@ -583,6 +576,7 @@ unsigned char MPU6050::dmpInitialize() {
 			//TODO: This is just for testing
 			waitCounterToInitializeMPU();
 			for (j = 0; j < 4 || j < dmpUpdate[2] + 3; j++, pos++)
+				//printf("My byte: %x at position: %d\n", pgm_read_byte(&dmpUpdates[pos]), pos);
 				dmpUpdate[j] = pgm_read_byte(&dmpUpdates[pos]);
 			readMemoryBlock(dmpUpdate + 3, dmpUpdate[2], dmpUpdate[0],
 					dmpUpdate[1]);
@@ -591,8 +585,7 @@ unsigned char MPU6050::dmpInitialize() {
 			while ((fifoCount = getFIFOCount()) < 3)
 				;
 
-			DEBUG_PRINT(F("Current FIFO count="));
-			DEBUG_PRINTLN(fifoCount);
+			printf("Current FIFO count=%d\n", fifoCount);
 
 			DEBUG_PRINTLN(F("Reading FIFO data..."));
 			getFIFOBytes(fifoBuffer, fifoCount);
@@ -823,17 +816,27 @@ unsigned char MPU6050::dmpGetEuler(float *data, Quaternion *q) {
 }
 unsigned char MPU6050::dmpGetYawPitchRoll(float *data, Quaternion *q,
 		VectorFloat *gravity) {
+	char sign;
+	if (gravity->z > 0) {
+		sign = 1;
+	} else {
+		sign = -1;
+	}
 	// yaw: (about Z axis)
 	data[0] = atan2(2 * q->x * q->y - 2 * q->w * q->z,
 			2 * q->w * q->w + 2 * q->x * q->x - 1);
 	// pitch: (nose up/down, about Y axis)
 	data[1] = atan(
-			gravity->x
-					/ sqrt(gravity->y * gravity->y + gravity->z * gravity->z));
+			gravity->x / sign
+					* sqrt(
+							0.001 * gravity->y * gravity->y
+									+ gravity->z * gravity->z));
 	// roll: (tilt left/right, about X axis)
 	data[2] = atan(
-			gravity->y
-					/ sqrt(gravity->x * gravity->x + gravity->z * gravity->z));
+			gravity->y / sign
+					* sqrt(
+							0.001 * gravity->x * gravity->x
+									+ gravity->z * gravity->z));
 	return 0;
 }
 

@@ -14,6 +14,7 @@ extern "C" {
 
 /* --------------- Globals --------------- */
 INT8U *pEmergencyStop;
+void *myMPU;
 
 /* --------------- Macros --------------- */
 #define SNR_DMP_BASE (0x80000000 | STATE_CMD_MEMORY_BASE)

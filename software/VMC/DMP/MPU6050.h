@@ -1120,6 +1120,14 @@ extern "C" {
 		unsigned char mpuDmpGetAccel(void *mpu, CVectorInt16 *v, const unsigned char* packet);
 		unsigned char mpuDmpGetEuler(void *mpu, float *data, CQuaternion *q);
 
+		void mpuGetMotion6(void *mpu, int* ax, int* ay, int* az, int* gx, int* gy,
+				int* gz);
+
+		void calibrateMPU(void *mpu);
+		void meanSensors(void *mpu, int *meanAx, int *meanAy, int *meanAz, int *meanGx, int *meanGy, int *meanGz);
+		void callibration(void *mpu, int *meanAx, int *meanAy, int *meanAz, int *meanGx, int *meanGy, int *meanGz, short *ax_offset, short *ay_offset, short *az_offset, short *gx_offset, short *gy_offset, short *gz_offset);
+		void mpuDelay (volatile unsigned int del);
+
 #ifdef __cplusplus
 }
 #endif

@@ -1,7 +1,3 @@
-/** @file
- *@brief MPU6050.cpp
-*/
-
 // I2Cdev library collection - MPU6050 I2C device class
 // Based on InvenSense MPU-6050 register map document rev. 2.0, 5/19/2011 (RM-MPU-6000A-00)
 // 8/24/2011 by Jeff Rowberg <jeff@rowberg.net>
@@ -3609,4 +3605,163 @@ unsigned char mpuDmpGetEuler(void *mpu, float *data, CQuaternion *q) {
 		q1->y = q->y;
 		q1->z = q->z;
 	unsigned char ret = ((MPU6050*) mpu)->dmpGetEuler(data, q1);
+	return ret;
+}
+
+void mpuGetMotion6(void *mpu, short* ax, short* ay, short* az, short* gx, short* gy,
+		short* gz) {
+	((MPU6050*) mpu)->getMotion6(ax, ay, az, gx, gy, gz);
+}
+
+void calibrateMPU(void *mpu) {
+	int meanAx, meanAy, meanAz, meanGx, meanGy, meanGz;
+	short ax_offset, ay_offset, az_offset, gx_offset, gy_offset, gz_offset;
+	mpuSetXAccelOffset(mpu, 0);
+	mpuSetYAccelOffset(mpu, 0);
+	mpuSetZAccelOffset(mpu, 0);
+	mpuSetXGyroOffset(mpu, 0);
+	mpuSetYGyroOffset(mpu, 0);
+	mpuSetZGyroOffset(mpu, 0);
+
+	short acctOffset = ((MPU6050*) mpu)->getXAccelOffset();
+	printf("Current accX offset: %d", acctOffset);
+
+	printf("Reading sensors for the first time\n");
+	meanSensors(mpu, &meanAx, &meanAy, &meanAz, &meanGx, &meanGy, &meanGz);
+	mpuDelay(1000);
+	callibration(mpu, &meanAx, &meanAy, &meanAz, &meanGx, &meanGy, &meanGz, &ax_offset, &ay_offset, &az_offset, &gx_offset, &gy_offset, &gz_offset);
+	mpuDelay(1000);
+	meanSensors(mpu, &meanAx, &meanAy, &meanAz, &meanGx, &meanGy, &meanGz);
+	printf("FINISHED!\n");
+	    printf("Sensor readings with offsets:\n");
+	    printf("mean ax: %d\n",meanAx);
+	    printf("mean ay: %d\n",meanAy);
+	    printf("mean az: %d\n",meanAz);
+	    printf("mean gx: %d\n",meanGx);
+	    printf("mean gy: %d\n",meanGy);
+	    printf("mean gz: %d\n",meanGz);
+	    printf("Your offsets:\t");
+	    printf("ax offset: %d\n",ax_offset);
+	    printf("ay offset: %d\n",ay_offset);
+	    printf("az offset: %d\n",az_offset);
+	    printf("gx offset: %d\n",gx_offset);
+	    printf("gy offset: %d\n",gy_offset);
+	    printf("gz offset: %d\n",gz_offset);
+	    printf("Data is printed as: acelX acelY acelZ giroX giroY giroZ\n");
+	    printf("Check that your sensor readings are close to 0 0 16384 0 0 0");
+	    printf("If calibration was succesful write down your offsets so you can set them in your projects using something similar to mpu.setXAccelOffset(youroffset)");
+}
+
+void meanSensors(void *mpu, int *meanAx, int *meanAy, int *meanAz, int *meanGx, int *meanGy, int *meanGz) {
+	long long i=0,buff_ax=0,buff_ay=0,buff_az=0,buff_gx=0,buff_gy=0,buff_gz=0;
+	short ax, ay, az, gx, gy, gz;
+	int buffersize=1000;
+
+	while (i<(buffersize+101)){
+	    // read raw accel/gyro measurements from device
+	    mpuGetMotion6(mpu, &ax, &ay, &az, &gx, &gy, &gz);
+	    if (i>100 && i<=(buffersize+100)){ //First 100 measures are discarded
+	          buff_ax=buff_ax+ax;
+	          buff_ay=buff_ay+ay;
+	          buff_az=buff_az+az;
+	          buff_gx=buff_gx+gx;
+	          buff_gy=buff_gy+gy;
+	          buff_gz=buff_gz+gz;
+	        }
+	        if (i==(buffersize+100)){
+	          *meanAx=buff_ax/buffersize;
+	          *meanAy=buff_ay/buffersize;
+	          *meanAz=buff_az/buffersize;
+	          *meanGx=buff_gx/buffersize;
+	          *meanGy=buff_gy/buffersize;
+	          *meanGz=buff_gz/buffersize;
+	        }
+	        i++;
+	        mpuDelay(200);
+	}
+}
+
+void callibration(void *mpu, int *meanAx, int *meanAy, int *meanAz, int *meanGx, int *meanGy, int *meanGz, short *ax_offset, short *ay_offset, short *az_offset, short *gx_offset, short *gy_offset, short *gz_offset) {
+	int acel_deadzone=8;     //Acelerometer error allowed, make it lower to get more precision, but sketch may not converge  (default:8)
+	int giro_deadzone=1;     //Giro error allowed, make it lower to get more precision, but sketch may not converge  (default:1)
+
+	*ax_offset= (-1)* *meanAx/8;
+	*ay_offset= (-1)* *meanAy/8;
+	*az_offset= (16384 - *meanAz)/8;
+
+	*gx_offset= (-1)* *meanGx/4;
+	*gy_offset= (-1)* *meanGy/4;
+	*gz_offset= (-1)* *meanGz/4;
+
+	while (1){
+	    int ready=0;
+	    mpuSetXAccelOffset(mpu, *ax_offset);
+	    mpuSetYAccelOffset(mpu, *ay_offset);
+	    mpuSetZAccelOffset(mpu, *az_offset);
+
+	    //((MPU6050*) mpu)->setXGyroOffsetTC()
+
+	    mpuSetXGyroOffset(mpu, *gx_offset);
+	    mpuSetYGyroOffset(mpu, *gy_offset);
+	    mpuSetZGyroOffset(mpu, *gz_offset);
+
+	    meanSensors(mpu, meanAx, meanAy, meanAz, meanGx, meanGy, meanGz);
+	    printf("...\n");
+	    printf("mean ax: %d\n",*meanAx);
+	    printf("mean ay: %d\n",*meanAy);
+	    printf("mean az: %d\n",*meanAz);
+	    printf("mean gx: %d\n",*meanGx);
+	    printf("mean gy: %d\n",*meanGy);
+	    printf("mean gz: %d\n",*meanGz);
+
+	    if (abs(*meanAx)<=acel_deadzone) {
+	    	ready++;
+	    	printf("AX Ready \n");
+	    }
+	    else {
+	    	*ax_offset=(*ax_offset)-(*meanAx/acel_deadzone);
+	    }
+
+	    if (abs(*meanAy)<=acel_deadzone) {
+	    	ready++;
+	    	printf("AY Ready \n");
+	    }
+	    else {
+	    	*ay_offset=*ay_offset-*meanAy/acel_deadzone;
+	    }
+
+	    if (abs(16384-*meanAz)<=acel_deadzone) {
+	    	ready++;
+	    	printf("AZ Ready \n");
+	    }
+	    else*az_offset=*az_offset+(16384-*meanAz)/acel_deadzone;
+
+	    if (abs(*meanGx)<=giro_deadzone) {
+	    	ready++;
+	    	printf("GX Ready \n");
+	    }
+	    else *gx_offset=*gx_offset-*meanGx/(giro_deadzone+1);
+
+	    if (abs(*meanGy)<=giro_deadzone) {
+	    	ready++;
+	    	printf("GY Ready \n");
+	    }
+	    else *gy_offset=*gy_offset-*meanGy/(giro_deadzone+1);
+
+	    if (abs(*meanGz)<=giro_deadzone) {
+	    	ready++;
+	    	printf("GZ Ready \n");
+	    }
+	    else *gz_offset=*gz_offset-*meanGz/(giro_deadzone+1);
+
+	    if (ready==6) break;
+	  }
+}
+
+void mpuDelay (volatile unsigned int del)
+{
+	while (del != 0)
+	{
+		del --;
+	}
 }

@@ -20,6 +20,11 @@ void initVMC(void)
 	pEmergencyStop = (INT8U*)(STATE_CMD_MEMORY_BASE | 0x04);
 
 	mutex = OSMutexCreate(MUTEX_PRIORITY, &return_code);
+
+	myMPU = getMPU();
+	initMPU(myMPU);
+	mpuDmpInitialize(myMPU);
+	calibrateMPU(myMPU);
 }
 
 #include "../VMC.h"
@@ -448,9 +453,6 @@ void initUltrasoundSensors() {
 }
 
 void makeMeasurement() {
-#ifdef DEBUG
-	printf("HC SR04: 0x%x\n", *pHc_sr04);
-#endif
 	*pHc_sr04 = 0xff;
 }
 
@@ -464,10 +466,6 @@ char getMeanSensorDistance(unsigned int *means) {
 	int i = 0;
 	if (*pHc_sr04 != 0xff) {
 		makeMeasurement();
-#ifdef DEBUG
-		printf("Sensors not ready! HC SR04: 0x%x\n", *pHc_sr04);
-#endif
-
 		return -1;
 	}
 	for (sensor = 0; sensor < NUMBER_OF_ULTRA_SOUND_DEVICES; sensor++) {
