@@ -127,9 +127,9 @@ void sensorCollector(void* pdata)
 				printf("Sensor %i: %i [mm]\n", sensorCounter, ultraSoundSensors[sensorCounter]);
 #endif
 
-				//OSMutexPend(mutex, 0, &return_code);
-					//SONICSetState(ultraSoundSensors[sensorCounter], (enum SONIC_SENSOR_POS) sensorCounter);
-				//OSMutexPost(mutex);
+				OSMutexPend(mutex, 0, &return_code);
+					SONICSetState(ultraSoundSensors[sensorCounter], (enum SONIC_SENSOR_POS) sensorCounter);
+				OSMutexPost(mutex);
 
 				if (ultraSoundSensors[sensorCounter] <= EMERGENCY_STOP_DISTANCE)
 				{

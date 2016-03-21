@@ -17,9 +17,9 @@ void initVMC(void)
 
 	initUltrasoundSensors();
 
-	pEmergencyStop = (volatile unsigned int*)(STATE_CMD_MEMORY_BASE | 0x04);
+	pEmergencyStop = (INT8U*)(STATE_CMD_MEMORY_BASE | 0x04);
 
-	//mutex = OSMutexCreate(MUTEX_PRIORITY, &return_code);
+	mutex = OSMutexCreate(MUTEX_PRIORITY, &return_code);
 }
 
 #include "../VMC.h"
@@ -110,9 +110,9 @@ snr_sonic_t* SONICGetState(enum SONIC_SENSOR_POS position)
 {
 	return (snr_sonic_t *) (SNR_SONIC_BASE + (sizeof(snr_sonic_t) * (int)position));
 }
-void SONICSetState(int distance, enum SONIC_SENSOR_POS position)
+void SONICSetState(unsigned int distance, enum SONIC_SENSOR_POS position)
 {
-	snr_sonic_t* currentSonic = (snr_sonic_t *) (SNR_SONIC_BASE * (int)position);
+	snr_sonic_t* currentSonic = (snr_sonic_t *) (SNR_SONIC_BASE + (sizeof(snr_sonic_t) * (int)position));
 
 	currentSonic->_distance = distance;
 	currentSonic->_position = position;

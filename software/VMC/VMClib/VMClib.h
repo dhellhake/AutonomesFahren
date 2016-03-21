@@ -13,12 +13,13 @@ extern "C" {
 #endif
 
 /* --------------- Globals --------------- */
-volatile unsigned int *pEmergencyStop;
+INT8U *pEmergencyStop;
 
 /* --------------- Macros --------------- */
 #define SNR_DMP_BASE (0x80000000 | STATE_CMD_MEMORY_BASE)
 #define SNR_SONIC_BASE ((0x80000000 | STATE_CMD_MEMORY_BASE) + sizeof(snr_dmp_t))
 #define ACT_WHL_BASE ((0x80000000 | STATE_CMD_MEMORY_BASE) + sizeof(snr_dmp_t) + (sizeof(snr_sonic_t) * 8))
+#define EMCY_STP_BASE ((0x80000000 | STATE_CMD_MEMORY_BASE) + sizeof(snr_dmp_t) + (sizeof(snr_sonic_t) * 8) + sizeof(act_wheel_t) * 4)
 #define NUMBER_MEAN_VALUES 4
 #define ERROR_TOLERANCE 1000
 #define MUTEX_PRIORITY 5
@@ -113,7 +114,7 @@ typedef struct SensorValue
 
 /* --------------- Prototypes --------------- */
 extern snr_sonic_t* SONICGetState(enum SONIC_SENSOR_POS position);
-extern void SONICSetState(int distance, enum SONIC_SENSOR_POS position);
+extern void SONICSetState(unsigned int distance, enum SONIC_SENSOR_POS position);
 extern void MNV_IntQueue();
 extern inline mnv_item_t* MNV_Queue_DeQueue();
 extern inline mnv_item_t* MNV_Queue_EnQueue(unsigned int type);
