@@ -448,7 +448,9 @@ void initUltrasoundSensors() {
 }
 
 void makeMeasurement() {
-	printf("HC SR04: 0x%x", *pHc_sr04);
+#ifdef DEBUG
+	printf("HC SR04: 0x%x\n", *pHc_sr04);
+#endif
 	*pHc_sr04 = 0xff;
 }
 
@@ -462,7 +464,9 @@ char getMeanSensorDistance(unsigned int *means) {
 	int i = 0;
 	if (*pHc_sr04 != 0xff) {
 		makeMeasurement();
+#ifdef DEBUG
 		printf("Sensors not ready! HC SR04: 0x%x\n", *pHc_sr04);
+#endif
 
 		return -1;
 	}

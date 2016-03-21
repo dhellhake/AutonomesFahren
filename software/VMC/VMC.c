@@ -3,7 +3,7 @@
  * @brief main file of vehicle management and control
  */
 
-#define DEBUG
+//#define DEBUG
 #define DEBUG_SPD_CTRL
 //#define TEST
 
@@ -58,7 +58,7 @@ OS_STK    step_response_stk[TASK_STACKSIZE];
 #define TASK_SENSOR_COLLECTOR_PRIORITY  1
 #define TASK2_PRIORITY      			3
 #define TASK_UART_PRIORITY				4
-#define TASK_TEST_PRIORITY				1
+#define TASK_TEST_PRIORITY				7
 #define TASK_STP_RESP_PRIORITY			6
 
 void sensorCollector2(void* pdata)
@@ -140,7 +140,9 @@ void sensorCollector(void* pdata)
 					emergencyStop = 1;
 				}
 			}
-			*pEmergencyStop = emergencyStop;
+			OSMutexPend(mutex, 0, &return_code);
+				*pEmergencyStop = emergencyStop;
+			OSMutexPost(mutex);
 			emergencyStop = 0;
 		}
 
@@ -191,6 +193,35 @@ void test(void* pdata)
 #endif
 		OSTimeDlyHMSM(0,0,1,0);
 	}*/
+}
+
+void readValues(void* pdata)
+{
+	INT32U start_execution;
+	INT32U timeToWait;
+
+	unsigned int ultraSoundSensors[8];
+	int sensorCounter = 0;
+	char emergencyStop = 0;
+
+	INT8U return_code = OS_NO_ERR;
+
+	while (1)
+	{
+		snr_sonic_t* ultrasonic_test;
+
+		start_execution = OSTimeGet();
+
+		OSMutexPend(mutex, 0, &return_code);
+			ultrasonic_test = SONICGetState(3);
+		OSMutexPost(mutex);
+
+		printf("Sensor 3: %i\n", ultrasonic_test->_distance);
+
+		timeToWait = SENSOR_COLLECTOR_CYCLE_TIME_MS - (OSTimeGet() - start_execution);
+		if(timeToWait > 0)
+			OSTimeDlyHMSM(0, 0, 0, timeToWait);
+	}
 }
 
 /* The main function creates two task and starts multi-tasking */
@@ -258,7 +289,7 @@ int main(void)
 
  printf("task status: %i; OS_NO_ERROR: %i\n", task_status, OS_NO_ERR);
 
-  /*OSTaskCreateExt(task_500ms,
+  OSTaskCreateExt(readValues,
                     NULL,
                     &test_stk[TASK_STACKSIZE-1],
                     TASK_TEST_PRIORITY,
@@ -266,7 +297,7 @@ int main(void)
                     test_stk,
                     TASK_STACKSIZE,
                     NULL,
-                    0);*/
+                    0);
 
   OSStart();
   return 0;
