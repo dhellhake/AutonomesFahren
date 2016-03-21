@@ -117,6 +117,7 @@ void sensorCollector(void* pdata) {
 	unsigned short dmpPacketSize = 0;
 	unsigned short fifoCount = 0;
 	unsigned char fifoBuffer[64];
+	unsigned char fifoBufferTmp[64];
 	unsigned char mpuStatus = 0;
 	CQuaternion q;
 	CVectorFloat gravity;
@@ -181,12 +182,13 @@ void sensorCollector(void* pdata) {
 				fifoCount = mpuGetFIFOCount(myMPU);
 			}
 			mpuGetFIFOBytes(myMPU, fifoBuffer, dmpPacketSize);
-
+			memcpy(fifoBufferTmp, fifoBuffer, sizeof(char) * 64);
 			//gyro = mpuGetGyro(myMPU, fifoBuffer);
-			mpuDmpGetQuaternion(myMPU, &q, fifoBuffer);
+			mpuDmpGetQuaternion(myMPU, &q, fifoBufferTmp);
+			memcpy(fifoBufferTmp, fifoBuffer, sizeof(char) * 64);
 			mpuDmpGetGravity(myMPU, &gravity, &q);
 			mpuDmpGetYawPitchRoll(myMPU, yawPitchRol, &q, &gravity);
-			mpuDmpGetAccel(myMPU, &accl, fifoBuffer);
+			mpuDmpGetAccel(myMPU, &accl, fifoBufferTmp);
 			//mpuDmpReadAndProcessFIFOPacket(myMPU, 1, &processed);
 			//delay(10000000);
 			//printf("Accl x: %d, y: %d, z: %d\n", accl.x, accl.y, accl.z);
@@ -258,14 +260,21 @@ void readValues(void* pdata) {
 
 	while (1) {
 		snr_sonic_t* ultrasonic_test;
+		snr_dmp_t* mpu_test;
 
 		start_execution = OSTimeGet();
 
 		OSMutexPend(mutex, 0, &return_code);
-		ultrasonic_test = SONICGetState(3);
+			ultrasonic_test = SONICGetState(3);
 		OSMutexPost(mutex);
 
+		OSMutexPend(mutex, 0, &return_code);
+			mpu_test = DMPGetValueSet();
+		OSMutexPost(mutex);
+
+
 		printf("Sensor 3: %i\n", ultrasonic_test->_distance);
+		printf("Acc X: %i\n", mpu_test->_accX);
 
 		timeToWait = SENSOR_COLLECTOR_CYCLE_TIME_MS
 				- (OSTimeGet() - start_execution);

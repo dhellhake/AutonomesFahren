@@ -14,6 +14,7 @@
 #include "VMClib/VMClib.h"
 #include "DMP/helper_3dmathc.h"
 #include "math.h"
+#include "string.h"
 
 #define WHL_CIRCUMFERENCE 		200 // [mm]
 #define WHL_TICKS_PER_REVOLUTION 	20 // [whl_tick]
