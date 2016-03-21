@@ -3,7 +3,7 @@
  * @brief main file of vehicle management and control
  */
 
-#define DEBUG
+//#define DEBUG
 #define DEBUG_SPD_CTRL
 //#define TEST
 
@@ -22,8 +22,8 @@ INT16S Ki_SpeedCtrl_num = 897;
 INT16S Ki_SpeedCtrl_den = 1000;
 INT16S Kd_SpeedCtrl_num = 0;
 INT16S Kd_SpeedCtrl_den = 1000;
-INT32S I_SpeedCtrl_min = -100;//-10000;
-INT32S I_SpeedCtrl_max = 100;//10000;
+INT32S I_SpeedCtrl_min = -100; //-10000;
+INT32S I_SpeedCtrl_max = 100; //10000;
 INT32S P_SpeedCtrl = 0;
 INT32S I_SpeedCtrl = 0;
 INT32S D_SpeedCtrl = 0;
@@ -33,7 +33,7 @@ INT32S I_SpeedCtrl_error = 0;
 INT32U speed = 0;
 INT32S e_speed = 0;
 INT32S e_speed_old = 0;
-INT16S PWM_SpeedCtrl_max = 80;	// more than 80% PWM-DutyCycle leads to faulty values of the wheel encoders
+INT16S PWM_SpeedCtrl_max = 80; // more than 80% PWM-DutyCycle leads to faulty values of the wheel encoders
 INT16S PWM_SpeedCtrl_min = 0;
 INT32S step_size = 50;
 OS_EVENT *mutex = NULL;
@@ -42,12 +42,12 @@ OS_EVENT *mutex = NULL;
 
 /* Definition of Task Stacks */
 #define   TASK_STACKSIZE       2048
-OS_STK    sensorCollector_stk[TASK_STACKSIZE];
-OS_STK    drivingTask_stk[TASK_STACKSIZE];
-OS_STK	  speedControl_stk[TASK_STACKSIZE];
-OS_STK	  uart_stk[TASK_STACKSIZE];
-OS_STK	  test_stk[TASK_STACKSIZE];
-OS_STK    step_response_stk[TASK_STACKSIZE];
+OS_STK sensorCollector_stk[TASK_STACKSIZE];
+OS_STK drivingTask_stk[TASK_STACKSIZE];
+OS_STK speedControl_stk[TASK_STACKSIZE];
+OS_STK uart_stk[TASK_STACKSIZE];
+OS_STK test_stk[TASK_STACKSIZE];
+OS_STK step_response_stk[TASK_STACKSIZE];
 
 /* Definition of Task Priorities */
 /* Each Task must have a unique priority number
@@ -61,8 +61,7 @@ OS_STK    step_response_stk[TASK_STACKSIZE];
 #define TASK_TEST_PRIORITY				7
 #define TASK_STP_RESP_PRIORITY			6
 
-void sensorCollector2(void* pdata)
-{
+void sensorCollector2(void* pdata) {
 	// make signed variable because of timeToWait calculation could be negative
 	INT32S start_execution = 0;
 	INT32S timeToWait = 0;
@@ -71,41 +70,39 @@ void sensorCollector2(void* pdata)
 	int sensorCounter = 0;
 	char emergencyStop = 0;
 
-	while(1)
-	{
+	while (1) {
 		start_execution = OSTimeGet();
 
 		/*if (getMeanSensorDistance(ultraSoundSensors) == 0)
-		{
-			for (sensorCounter = 0; sensorCounter < NUMBER_OF_ULTRA_SOUND_DEVICES; sensorCounter++)
-			{
-				printf("Sensor %i: %i [mm]\n", sensorCounter, ultraSoundSensors[sensorCounter]);
+		 {
+		 for (sensorCounter = 0; sensorCounter < NUMBER_OF_ULTRA_SOUND_DEVICES; sensorCounter++)
+		 {
+		 printf("Sensor %i: %i [mm]\n", sensorCounter, ultraSoundSensors[sensorCounter]);
 
-				if(sensorCounter == 0)
-					if (ultraSoundSensors[sensorCounter] <= EMERGENCY_STOP_DISTANCE)
-					{
-						//TODO: We should raise a stop signal here
-						//printf("Emergency stop!!\n");
-						emergencyStop = 1;
-					}
-			}
-			//*pEmergencyStop = emergencyStop;
-			emergencyStop = 0;
-		}
+		 if(sensorCounter == 0)
+		 if (ultraSoundSensors[sensorCounter] <= EMERGENCY_STOP_DISTANCE)
+		 {
+		 //TODO: We should raise a stop signal here
+		 //printf("Emergency stop!!\n");
+		 emergencyStop = 1;
+		 }
+		 }
+		 //*pEmergencyStop = emergencyStop;
+		 emergencyStop = 0;
+		 }
 
-		//delay(100000);*/
+		 //delay(100000);*/
 
-		timeToWait = SENSOR_COLLECTOR_CYCLE_TIME_MS - (OSTimeGet() - start_execution);
+		timeToWait = SENSOR_COLLECTOR_CYCLE_TIME_MS
+				- (OSTimeGet() - start_execution);
 		printf("timeToWait: %i\n", timeToWait);
 
-		if(timeToWait > 0)
+		if (timeToWait > 0)
 			OSTimeDlyHMSM(0, 0, 0, timeToWait);
 	}
 }
 
-
-void sensorCollector(void* pdata)
-{
+void sensorCollector(void* pdata) {
 	INT32U start_execution;
 	INT32U timeToWait;
 
@@ -133,24 +130,24 @@ void sensorCollector(void* pdata)
 	mpuResetFIFO(myMPU);
 	mpuSetDMPEnabled(myMPU, 1);
 
-	while (1)
-	{
+	while (1) {
 		start_execution = OSTimeGet();
 
-		if (getMeanSensorDistance(ultraSoundSensors) == 0)
-		{
-			for (sensorCounter = 0; sensorCounter < NUMBER_OF_ULTRA_SOUND_DEVICES; sensorCounter++)
-			{
+		if (getMeanSensorDistance(ultraSoundSensors) == 0) {
+			for (sensorCounter = 0;
+					sensorCounter < NUMBER_OF_ULTRA_SOUND_DEVICES;
+					sensorCounter++) {
 #ifdef DEBUG
-				printf("Sensor %i: %i [mm]\n", sensorCounter, ultraSoundSensors[sensorCounter]);
+				printf("Sensor %i: %i [mm]\n", sensorCounter,
+						ultraSoundSensors[sensorCounter]);
 #endif
 
 				OSMutexPend(mutex, 0, &return_code);
-					SONICSetState(ultraSoundSensors[sensorCounter], (enum SONIC_SENSOR_POS) sensorCounter);
+				SONICSetState(ultraSoundSensors[sensorCounter],
+						(enum SONIC_SENSOR_POS) sensorCounter);
 				OSMutexPost(mutex);
 
-				if (ultraSoundSensors[sensorCounter] <= EMERGENCY_STOP_DISTANCE)
-				{
+				if (ultraSoundSensors[sensorCounter] <= EMERGENCY_STOP_DISTANCE) {
 					//TODO: We should raise a stop signal here
 #ifdef DEBUG
 					printf("Emergency stop!!\n");
@@ -159,62 +156,93 @@ void sensorCollector(void* pdata)
 				}
 			}
 			OSMutexPend(mutex, 0, &return_code);
-				*pEmergencyStop = emergencyStop;
+			*pEmergencyStop = emergencyStop;
 			OSMutexPost(mutex);
 			emergencyStop = 0;
 		}
 
-		timeToWait = SENSOR_COLLECTOR_CYCLE_TIME_MS - (OSTimeGet() - start_execution);
-		if(timeToWait > 0)
+		fifoCount = mpuGetFIFOCount(myMPU);
+		mpuStatus = mpuGetIntStatus(myMPU);
+
+		if ((mpuStatus & 0x10) || fifoCount == 1024) {
+			mpuResetFIFO(myMPU);
+			printf("FIFO Overflow, reset\n");
+		} else if (mpuStatus & 0x02) {
+			//Read all old values and wait for newest to be written
+			while ((fifoCount - dmpPacketSize) >= dmpPacketSize) {
+				//Read till we have the last packet in the fifo, to avoid overflows
+				mpuGetFIFOBytes(myMPU, fifoBuffer, dmpPacketSize);
+				fifoCount = fifoCount - dmpPacketSize;
+				//fifoCount = mpuGetFIFOCount(myMPU);
+				//printf("Read to avoid overflow, paketsize is: %d, fifocount is: %d\n", dmpPacketSize, fifoCount);
+			}
+
+			while (fifoCount < dmpPacketSize) {
+				fifoCount = mpuGetFIFOCount(myMPU);
+			}
+			mpuGetFIFOBytes(myMPU, fifoBuffer, dmpPacketSize);
+
+			//gyro = mpuGetGyro(myMPU, fifoBuffer);
+			mpuDmpGetQuaternion(myMPU, &q, fifoBuffer);
+			mpuDmpGetGravity(myMPU, &gravity, &q);
+			mpuDmpGetYawPitchRoll(myMPU, yawPitchRol, &q, &gravity);
+			//mpuDmpGetAccel(myMPU, &accl, fifoBuffer);
+			//mpuDmpReadAndProcessFIFOPacket(myMPU, 1, &processed);
+			//delay(10000000);
+			//printf("Accl x: %d, y: %d, z: %d\n", accl.x, accl.y, accl.z);
+			//printf("Gyro x: %d, y: %d, z: %d\n", gyro.x, gyro.y, gyro.z);
+			printf("Yaw  %f, Pitch: %f, Roll: %f\n", yawPitchRol[2]*(180.0 / M_PI), yawPitchRol[1]*(180.0 / M_PI), yawPitchRol[0]*(180.0 / M_PI));
+		}
+		timeToWait = SENSOR_COLLECTOR_CYCLE_TIME_MS
+				- (OSTimeGet() - start_execution);
+		if (timeToWait > 0)
 			OSTimeDlyHMSM(0, 0, 0, timeToWait);
 	}
 }
 
-void test(void* pdata)
-{
+void test(void* pdata) {
 	int i = 0;
 	g_i16s_PWMSpeedCtrl = 40;
-	*pwm_enable = (ALL_WHEEL_FWD_MASK | ENABLE_ENC_MASK );
+	*pwm_enable = (ALL_WHEEL_FWD_MASK | ENABLE_ENC_MASK);
 
 	calcSteeringOffset(33);
-	OSTimeDlyHMSM(0,0,3,0);
+	OSTimeDlyHMSM(0, 0, 3, 0);
 
 	calcSteeringOffset(-33);
-	OSTimeDlyHMSM(0,0,3,0);
+	OSTimeDlyHMSM(0, 0, 3, 0);
 
 	calcSteeringOffset(66);
-	OSTimeDlyHMSM(0,0,3,0);
+	OSTimeDlyHMSM(0, 0, 3, 0);
 
 	calcSteeringOffset(-66);
-	OSTimeDlyHMSM(0,0,3,0);
+	OSTimeDlyHMSM(0, 0, 3, 0);
 
 	calcSteeringOffset(100);
-	OSTimeDlyHMSM(0,0,3,0);
+	OSTimeDlyHMSM(0, 0, 3, 0);
 
 	calcSteeringOffset(-100);
-	OSTimeDlyHMSM(0,0,3,0);
+	OSTimeDlyHMSM(0, 0, 3, 0);
 
 	/*for(i = 0; i < 20; i++)
-	{
-		desired_speed = i * 100;
-#ifdef DEBUG
-		printf("desired_speed: %i\n", desired_speed);
-#endif
-		OSTimeDlyHMSM(0,0,1,0);
-	}
+	 {
+	 desired_speed = i * 100;
+	 #ifdef DEBUG
+	 printf("desired_speed: %i\n", desired_speed);
+	 #endif
+	 OSTimeDlyHMSM(0,0,1,0);
+	 }
 
-	for(i = 20; i >= 0; i--)
-	{
-		desired_speed = i * 100;
-#ifdef DEBUG
-		printf("desired_speed: %i\n", desired_speed);
-#endif
-		OSTimeDlyHMSM(0,0,1,0);
-	}*/
+	 for(i = 20; i >= 0; i--)
+	 {
+	 desired_speed = i * 100;
+	 #ifdef DEBUG
+	 printf("desired_speed: %i\n", desired_speed);
+	 #endif
+	 OSTimeDlyHMSM(0,0,1,0);
+	 }*/
 }
 
-void readValues(void* pdata)
-{
+void readValues(void* pdata) {
 	INT32U start_execution;
 	INT32U timeToWait;
 
@@ -224,28 +252,27 @@ void readValues(void* pdata)
 
 	INT8U return_code = OS_NO_ERR;
 
-	while (1)
-	{
+	while (1) {
 		snr_sonic_t* ultrasonic_test;
 
 		start_execution = OSTimeGet();
 
 		OSMutexPend(mutex, 0, &return_code);
-			ultrasonic_test = SONICGetState(3);
+		ultrasonic_test = SONICGetState(3);
 		OSMutexPost(mutex);
 
 		printf("Sensor 3: %i\n", ultrasonic_test->_distance);
 
-		timeToWait = SENSOR_COLLECTOR_CYCLE_TIME_MS - (OSTimeGet() - start_execution);
-		if(timeToWait > 0)
+		timeToWait = SENSOR_COLLECTOR_CYCLE_TIME_MS
+				- (OSTimeGet() - start_execution);
+		if (timeToWait > 0)
 			OSTimeDlyHMSM(0, 0, 0, timeToWait);
 	}
 }
 
 /* The main function creates two task and starts multi-tasking */
-int main(void)
-{
-    INT8U task_status = OS_NO_ERR;
+int main(void) {
+	INT8U task_status = OS_NO_ERR;
 
 	OSInit();
 
@@ -253,72 +280,55 @@ int main(void)
 
 	initVMC();
 
-  /* Create Semaphor */
-  //Sem = OSSemCreate(1);
+	/* Create Semaphor */
+	//Sem = OSSemCreate(1);
+	/* Acquiring semaphore is done by calling OSSemPend()
+	 * and passing it the 'handle' of the semaphore which
+	 * was created earlier. The second argument of OSSemPen()
+	 * is used to specify a timout. A value of 0 means that
+	 * this task will wait forever for the semaphore. If the
+	 * semaphore was 'owned' by another task, MicroC/OS-II would
+	 * have to suspend this task and execute the next most
+	 * important task.
+	 */
+	//OSSemPend(Sem, timeout, &err);
+	/* Semaphore is released by calling OSSemPost(). Here
+	 * simply the handle of the semaphore has to be specified.
+	 */
+	//OSSemPost(Sem);
+	/* Processor specific macro used to disable interrupts */
+	//OS_ENTER_CRITICAL();
+	//OS_EXIT_CRITICAL();
+	/* Changing tick rate is handled by PC service called
+	 * PC_SetTickRate() and is passed the desired tick rate
+	 * (Set OS_TICKS_PER_SEC in system.h)
+	 */
+	// PC_SetTickRate(OS_TICKS_PER_SEC)
+	/* Clear Conext Switch Counter */
+	//OSCtxSwCtr = 0;
+	/*OSTaskCreateExt(speedControl,
+	 NULL,
+	 &speedControl_stk[TASK_STACKSIZE-1],
+	 TASK_SPD_CTRL_PRIORITY,
+	 TASK_SPD_CTRL_PRIORITY,
+	 speedControl_stk,
+	 TASK_STACKSIZE,
+	 NULL,
+	 0);*/
 
-  /* Acquiring semaphore is done by calling OSSemPend()
-   * and passing it the 'handle' of the semaphore which
-   * was created earlier. The second argument of OSSemPen()
-   * is used to specify a timout. A value of 0 means that
-   * this task will wait forever for the semaphore. If the
-   * semaphore was 'owned' by another task, MicroC/OS-II would
-   * have to suspend this task and execute the next most
-   * important task.
-   */
-  //OSSemPend(Sem, timeout, &err);
+	task_status = OSTaskCreateExt(sensorCollector, NULL,
+			(void *) &sensorCollector_stk[TASK_STACKSIZE - 1],
+			TASK_SENSOR_COLLECTOR_PRIORITY, TASK_SENSOR_COLLECTOR_PRIORITY,
+			sensorCollector_stk, TASK_STACKSIZE, NULL, 0);
 
-  /* Semaphore is released by calling OSSemPost(). Here
-   * simply the handle of the semaphore has to be specified.
-   */
-  //OSSemPost(Sem);
+	printf("task status: %i; OS_NO_ERROR: %i\n", task_status, OS_NO_ERR);
 
-  /* Processor specific macro used to disable interrupts */
-  //OS_ENTER_CRITICAL();
-  //OS_EXIT_CRITICAL();
+	OSTaskCreateExt(readValues, NULL, &test_stk[TASK_STACKSIZE - 1],
+			TASK_TEST_PRIORITY, TASK_TEST_PRIORITY, test_stk, TASK_STACKSIZE,
+			NULL, 0);
 
-  /* Changing tick rate is handled by PC service called
-   * PC_SetTickRate() and is passed the desired tick rate
-   * (Set OS_TICKS_PER_SEC in system.h)
-   */
-  // PC_SetTickRate(OS_TICKS_PER_SEC)
-
-  /* Clear Conext Switch Counter */
-  //OSCtxSwCtr = 0;
-               
- /*OSTaskCreateExt(speedControl,
-                  NULL,
-                  &speedControl_stk[TASK_STACKSIZE-1],
-                  TASK_SPD_CTRL_PRIORITY,
-                  TASK_SPD_CTRL_PRIORITY,
-                  speedControl_stk,
-                  TASK_STACKSIZE,
-                  NULL,
-                  0);*/
-
- task_status = OSTaskCreateExt(sensorCollector,
-                      NULL,
-                      (void *) &sensorCollector_stk[TASK_STACKSIZE-1],
-                      TASK_SENSOR_COLLECTOR_PRIORITY,
-                      TASK_SENSOR_COLLECTOR_PRIORITY,
-                      sensorCollector_stk,
-                      TASK_STACKSIZE,
-                      NULL,
-                      0);
-
- printf("task status: %i; OS_NO_ERROR: %i\n", task_status, OS_NO_ERR);
-
-  OSTaskCreateExt(readValues,
-                    NULL,
-                    &test_stk[TASK_STACKSIZE-1],
-                    TASK_TEST_PRIORITY,
-                    TASK_TEST_PRIORITY,
-                    test_stk,
-                    TASK_STACKSIZE,
-                    NULL,
-                    0);
-
-  OSStart();
-  return 0;
+	OSStart();
+	return 0;
 }
 
 #endif
@@ -337,7 +347,7 @@ typedef enum
 {
 	true,
 	false
-} bool_t;
+}bool_t;
 #endif
 
 int main()
@@ -363,7 +373,7 @@ int main()
 
 	*pwm_enable = (ALL_WHEEL_FWD_MASK | ENABLE_ENC_MASK );
 	delay(10000000);
-    *pwm_enable = PAUSE_ENC_MASK;
+	*pwm_enable = PAUSE_ENC_MASK;
 
 	fr = *pFrontRightEncRead;
 	rr = *pRearRightEncRead;
@@ -379,7 +389,6 @@ int main()
 	printf("Restarting the same number of rotations\n");
 
 	delay(100000);
-
 
 	*pFrontRightEncSet = fr;
 	*pRearRightEncSet = rr;
@@ -425,7 +434,7 @@ int main()
 		printf("\n\n");
 		delay(10000000);
 		//printf("4\n");;
-}
+	}
 #endif
 
 #ifdef MPU_TEST
@@ -489,6 +498,5 @@ int main()
 
 	return 0;
 }
-
 
 #endif
