@@ -878,9 +878,9 @@ public:
 	unsigned char dmpSendEIS(unsigned short elements, unsigned short accuracy);
 
 	// Get Fixed Point data from FIFO
-	unsigned char dmpGetAccel(long *data, const unsigned char* packet = 0);
-	unsigned char dmpGetAccel(short *data, const unsigned char* packet = 0);
-	unsigned char dmpGetAccel(VectorInt16 *v, const unsigned char* packet = 0);
+	unsigned char dmpGetAccel(INT32S *data, const INT8U* packet = 0);
+	unsigned char dmpGetAccel(INT16S *data, const INT8U* packet = 0);
+	unsigned char dmpGetAccel(VectorInt16 *v, const INT8U* packet = 0);
 	unsigned char dmpGetQuaternion(long *data, const unsigned char* packet = 0);
 	unsigned char dmpGetQuaternion(short *data,
 			const unsigned char* packet = 0);
@@ -1096,11 +1096,11 @@ extern "C" {
 		unsigned char mpuDmpInitialize(void *mpu);
 		void initMPU(void *mpu);
 		short mpuTestConnection(void *mpu);
-		unsigned char mpuDmpReadAndProcessFIFOPacket(void *mpu, unsigned char numPackets, unsigned char *processed);
-		void mpuSetDMPEnabled(void *mpu, short enabled);
+		unsigned char mpuDmpReadAndProcessFIFOPacket(void *mpu, INT8U numPackets, INT8U *processed);
+		void mpuSetDMPEnabled(void *mpu, INT16S enabled);
 		unsigned short mpuGetFIFOCount(void *mpu);
 		unsigned short mpuDmpGetFIFOPacketSize(void *mpu);
-		void mpuGetFIFOBytes(void *mpu, unsigned char *data, unsigned char length);
+		void mpuGetFIFOBytes(void *mpu, INT8U *data,INT8U length);
 
 		unsigned char mpuGetIntStatus(void *mpu);
 		void mpuResetFIFO(void *mpu);
@@ -1113,11 +1113,11 @@ extern "C" {
 		void mpuSetYAccelOffset(void *mpu, short offset);
 		void mpuSetZAccelOffset(void *mpu, short offset);
 
-		CVectorInt16 mpuGetGyro(void *mpu, const unsigned char* packet);
-		unsigned char mpuDmpGetQuaternion(void *mpu, CQuaternion *q, const unsigned char* packet);
+		CVectorInt16 mpuGetGyro(void *mpu, const INT8U* packet);
+		unsigned char mpuDmpGetQuaternion(void *mpu, CQuaternion *q, const INT8U* packet);
 		unsigned char mpuDmpGetGravity(void *mpu, CVectorFloat *v, CQuaternion *q);
 		unsigned char mpuDmpGetYawPitchRoll(void *mpu, float *data, CQuaternion *q, CVectorFloat *gravity);
-		unsigned char mpuDmpGetAccel(void *mpu, CVectorInt16 *v, const unsigned char* packet);
+		unsigned char mpuDmpGetAccel(void *mpu, CVectorInt16 *v, const INT8U* packet);
 		unsigned char mpuDmpGetEuler(void *mpu, float *data, CQuaternion *q);
 
 		void mpuGetMotion6(void *mpu, int* ax, int* ay, int* az, int* gx, int* gy,
@@ -1125,7 +1125,7 @@ extern "C" {
 
 		void calibrateMPU(void *mpu);
 		void meanSensors(void *mpu, int *meanAx, int *meanAy, int *meanAz, int *meanGx, int *meanGy, int *meanGz);
-		void callibration(void *mpu, int *meanAx, int *meanAy, int *meanAz, int *meanGx, int *meanGy, int *meanGz, short *ax_offset, short *ay_offset, short *az_offset, short *gx_offset, short *gy_offset, short *gz_offset);
+		void callibration(void *mpu, int *meanAx, int *meanAy, int *meanAz, int *meanGx, int *meanGy, int *meanGz, INT16S *ax_offset, INT16S *ay_offset, INT16S *az_offset, INT16S *gx_offset, INT16S *gy_offset, INT16S *gz_offset);
 		void mpuDelay (volatile unsigned int del);
 
 #ifdef __cplusplus

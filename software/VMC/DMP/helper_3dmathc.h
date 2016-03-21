@@ -16,9 +16,9 @@ typedef struct QuaternionStruct {
 } CQuaternion;
 
 typedef struct VectorInt16Struct {
-	short x;
-	short y;
-	short z;
+	INT16S x;
+	INT16S y;
+	INT16S z;
 } CVectorInt16;
 
 typedef struct VectorFloatStruct {

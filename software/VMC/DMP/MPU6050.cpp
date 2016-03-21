@@ -3467,19 +3467,43 @@ void MPU6050::setDMPConfig2(unsigned char config) {
 }
 
 //C Stuff
+/*
+ * Retrive void Pointer to mpu object for c
+ *
+ * @return void*
+ * 	void pointer containing the object
+ */
 void* getMPU() {
 	MPU6050 *out = new MPU6050();
 	return ((void*) out);
 }
 
+/*
+ * initialization of dmp on mpu
+ *
+ * @param void* mpu
+ * 	mpu object from c
+ */
 unsigned char mpuDmpInitialize(void *mpu) {
 	return ((MPU6050*) mpu)->dmpInitialize();
 }
 
+/*
+ * initialization of mpu
+ *
+ * @param void* mpu
+ * 	mpu object from c
+ */
 void initMPU(void *mpu) {
 	((MPU6050*) mpu)->initialize();
 }
 
+/*
+ * test mpu connection
+ *
+ * @param void* mpu
+ * 	mpu object from c
+ */
 short mpuTestConnection(void *mpu) {
 	if (((MPU6050*) mpu)->testConnection()) {
 		return 0;
@@ -3487,16 +3511,44 @@ short mpuTestConnection(void *mpu) {
 	return 1;
 }
 
+/*
+ * read packages from dmp and process it
+ *
+ * @param void* mpu
+ * 	mpu object from c
+ * @param INT8U numPackets
+ * @param INT8U *processed
+ * 	pointer to processeed packages
+ */
 unsigned char mpuDmpReadAndProcessFIFOPacket(void *mpu,
-		unsigned char numPackets, unsigned char *processed) {
+		INT8U numPackets, INT8U *processed) {
 	return ((MPU6050*) mpu)->dmpReadAndProcessFIFOPacket(numPackets, processed);
 }
 
-void mpuSetDMPEnabled(void *mpu, short enabled) {
+/*
+ * enables the dmp on the mpu
+ *
+ * @param void* mpu
+ * 	mpu object from c
+ *
+ * @param INT16S enabled
+ * 	enabled bit
+ */
+void mpuSetDMPEnabled(void *mpu, INT16S enabled) {
 	((MPU6050*) mpu)->setDMPEnabled(enabled);
 }
 
-CVectorInt16 mpuGetGyro(void *mpu, const unsigned char* packet) {
+/*
+ * get dmp gyroscope values
+ *
+ * @param void* mpu
+ * 	mpu object from c
+ * @param const INT8U* packet
+ * 	the fifo packet from the dmp
+ * @return
+ * 	CVectorInt16 containing gyroscope values
+ */
+CVectorInt16 mpuGetGyro(void *mpu, const INT8U* packet) {
 	VectorInt16 v;
 	VectorInt16Struct retV;
 	((MPU6050*) mpu)->dmpGetGyro(&v, packet);
@@ -3507,48 +3559,150 @@ CVectorInt16 mpuGetGyro(void *mpu, const unsigned char* packet) {
 	return retV;
 }
 
+/*
+ * get dmp fifo count
+ *
+ * @param void* mpu
+ * 	mpu object from c
+ * @return
+ * 	unsigned short available fifo bits
+ */
 unsigned short mpuGetFIFOCount(void *mpu) {
 	return ((MPU6050*) mpu)->getFIFOCount();
 }
 
+/*
+ * get dmp fifo count
+ *
+ * @param void* mpu
+ * 	mpu object from c
+ * @return
+ * 	unsigned short fifo packet size (bits)
+ */
 unsigned short mpuDmpGetFIFOPacketSize(void *mpu) {
 	return ((MPU6050*) mpu)->dmpGetFIFOPacketSize();
 }
 
-void mpuGetFIFOBytes(void *mpu, unsigned char *data, unsigned char length) {
+/*
+ * reads bytes from dmp fifo queue
+ *
+ * @param void* mpu
+ * 	mpu object from c
+ * @param INT8U *data
+ * 	pointer to write data to
+ * @param INT8U length
+ * 	number of bytes to read
+ */
+void mpuGetFIFOBytes(void *mpu, INT8U *data, INT8U length) {
 	((MPU6050*) mpu)->getFIFOBytes(data, length);
 }
 
-void mpuSetXGyroOffset(void *mpu, short offset) {
+/*
+ * set gyroscope x offset
+ *
+ * @param void* mpu
+ * 	mpu object from c
+ * @param INT16S offset
+ * 	offset value
+ */
+void mpuSetXGyroOffset(void *mpu, INT16S offset) {
 	((MPU6050*) mpu)->setXGyroOffset(offset);
 }
 
-void mpuSetYGyroOffset(void *mpu, short offset) {
+/*
+ * set gyroscope y offset
+ *
+ * @param void* mpu
+ * 	mpu object from c
+ * @param INT16S offset
+ * 	offset value
+ */
+void mpuSetYGyroOffset(void *mpu, INT16S offset) {
 	((MPU6050*) mpu)->setYGyroOffset(offset);
 }
 
-void mpuSetZGyroOffset(void *mpu, short offset) {
+/*
+ * set gyroscope z offset
+ *
+ * @param void* mpu
+ * 	mpu object from c
+ * @param INT16S offset
+ * 	offset value
+ */
+void mpuSetZGyroOffset(void *mpu, INT16S offset) {
 	((MPU6050*) mpu)->setZGyroOffset(offset);
 }
 
-void mpuSetXAccelOffset(void *mpu, short offset) {
+/*
+ * set acceleration x offset
+ *
+ * @param void* mpu
+ * 	mpu object from c
+ * @param INT16S offset
+ * 	offset value
+ */
+void mpuSetXAccelOffset(void *mpu, INT16S offset) {
 	((MPU6050*) mpu)->setXAccelOffset(offset);
 }
-void mpuSetYAccelOffset(void *mpu, short offset) {
+
+/*
+ * set acceleration y offset
+ *
+ * @param void* mpu
+ * 	mpu object from c
+ * @param INT16S offset
+ * 	offset value
+ */
+void mpuSetYAccelOffset(void *mpu, INT16S offset) {
 	((MPU6050*) mpu)->setYAccelOffset(offset);
 }
-void mpuSetZAccelOffset(void *mpu, short offset) {
+
+/*
+ * set acceleration z offset
+ *
+ * @param void* mpu
+ * 	mpu object from c
+ * @param INT16S offset
+ * 	offset value
+ */
+void mpuSetZAccelOffset(void *mpu, INT16S offset) {
 	((MPU6050*) mpu)->setZAccelOffset(offset);
 }
 
+/*
+ * get mpu status
+ *
+ * @param void* mpu
+ * 	mpu object from c
+ * @return unsigned char
+ * 	status as int
+ *
+ */
 unsigned char mpuGetIntStatus(void *mpu) {
 	return ((MPU6050*) mpu)->getIntStatus();
 }
 
+/*
+ * reset the fifo
+ *
+ * @param void* mpu
+ * 	mpu object from c
+ */
 void mpuResetFIFO(void *mpu) {
 	((MPU6050*) mpu)->resetFIFO();
 }
 
+/*
+ * get quaternion from fifo packet (transformation)
+ *
+ * @param void* mpu
+ * 	mpu object from c
+ * @param CQuaternion *q
+ * 	pointer to store the quaternion in
+ * @param const unsigned char* packet
+ * 	packet from the fifo queue
+ *
+ */
 unsigned char mpuDmpGetQuaternion(void *mpu, CQuaternion *q,
 		const unsigned char* packet) {
 	Quaternion *q1 = new Quaternion();
@@ -3559,6 +3713,18 @@ unsigned char mpuDmpGetQuaternion(void *mpu, CQuaternion *q,
 	q->z = q1->z;
 	return ret;
 }
+
+/*
+ * get raw gravity values for each acceleration axis (transformation)
+ *
+ * @param void* mpu
+ * 	mpu object from c
+ * @param CVectorFloat *v
+ * 	Pointer to a vector to store the acceleration values
+ * @param CQuaternion *q
+ * 	pointer of a quaternion (must be computed from fifo package
+ *
+ */
 unsigned char mpuDmpGetGravity(void *mpu, CVectorFloat *v, CQuaternion *q) {
 	Quaternion *q1 = new Quaternion();
 	VectorFloat *v1 = new VectorFloat();
@@ -3573,6 +3739,17 @@ unsigned char mpuDmpGetGravity(void *mpu, CVectorFloat *v, CQuaternion *q) {
 	return ret;
 }
 
+/*
+ * get yaw pitch and roll values to fetermine position from a quaternion (transformation)
+ *
+ * @param void* mpu
+ * 	mpu object from c
+ * @param float *data
+ * 	Pointer to a float array storing yaw pitch and roll
+ * @param CQuaternion *q
+ * 	pointer of a quaternion (must be computed from fifo package
+ *
+ */
 unsigned char mpuDmpGetYawPitchRoll(void *mpu, float *data, CQuaternion *q,
 		CVectorFloat *gravity) {
 	Quaternion *q1 = new Quaternion();
@@ -3588,7 +3765,18 @@ unsigned char mpuDmpGetYawPitchRoll(void *mpu, float *data, CQuaternion *q,
 	return ret;
 }
 
-unsigned char mpuDmpGetAccel(void *mpu, CVectorInt16 *v, const unsigned char* packet) {
+/*
+ * get raw acceleration values from a dmp fifo package (transformation)
+ *
+ * @param void* mpu
+ * 	mpu object from c
+ * @param CVectorInt16 *v
+ * 	Pointer to a int vector object to store the acceleration values in
+ * @param CVectorInt16 *v
+ * 	pointer to a fifo package from the dmp
+ *
+ */
+unsigned char mpuDmpGetAccel(void *mpu, CVectorInt16 *v, const CVectorInt16 *v) {
 	VectorInt16 *v1;
 	unsigned char ret = ((MPU6050*) mpu)->dmpGetAccel(v1, packet);
 	v->x = v1->x;
@@ -3598,6 +3786,17 @@ unsigned char mpuDmpGetAccel(void *mpu, CVectorInt16 *v, const unsigned char* pa
 	return ret;
 }
 
+/*
+ * get euler to determine position from a quaternion (transformation)
+ *
+ * @param void* mpu
+ * 	mpu object from c
+ * @param float *data
+ * 	Pointer to a float array storing euler values
+ * @param CQuaternion *q
+ * 	pointer of a quaternion (must be computed from fifo package)
+ *
+ */
 unsigned char mpuDmpGetEuler(void *mpu, float *data, CQuaternion *q) {
 	Quaternion *q1 = new Quaternion();
 		q1->w = q->w;
@@ -3608,11 +3807,35 @@ unsigned char mpuDmpGetEuler(void *mpu, float *data, CQuaternion *q) {
 	return ret;
 }
 
+/*
+ * Collects the 6 sensor values and sttores them in the supplied pointers
+ *
+ * @param void *mpu
+ * 	void pointer to mpu object
+ * @param short* ax
+ * 	acceleration x value pointer
+ * @param short* ay
+ * 	acceleration y value pointer
+ * @param short* az
+ * 	acceleration z value pointer
+ * @param short* gx
+ * 	gyroscope x value pointer
+ * @param short* gy
+ * 	gyroscope y value pointer
+ * @param short* gz
+ * 	gyroscope z value pointer
+ */
 void mpuGetMotion6(void *mpu, short* ax, short* ay, short* az, short* gx, short* gy,
 		short* gz) {
 	((MPU6050*) mpu)->getMotion6(ax, ay, az, gx, gy, gz);
 }
 
+/*
+ * callibration function that starts the callibration process and prints out the final offset values
+ *
+ * @param void *mpu
+ * 	void pointer to mpu object
+ */
 void calibrateMPU(void *mpu) {
 	int meanAx, meanAy, meanAz, meanGx, meanGy, meanGz;
 	short ax_offset, ay_offset, az_offset, gx_offset, gy_offset, gz_offset;
@@ -3652,6 +3875,25 @@ void calibrateMPU(void *mpu) {
 	    printf("If calibration was succesful write down your offsets so you can set them in your projects using something similar to mpu.setXAccelOffset(youroffset)");
 }
 
+/*
+ * calculate mean sensor values by collection 1000 samples
+ *
+ * @param void *mpu
+ * 	void pointer to mpu object
+ * @param int *meanAx
+ * 	pointer to calculated X Acceleration mean value
+ * @param int *meanAy
+ * 	pointer to calculated Y Acceleration mean value
+ * @param int *meanAz
+ * 	pointer to calculated Z Acceleration mean value
+ * @param int *meanGx
+ * 	pointer to calculated X Gyroscope mean value
+ * @param int *meanGy
+ * 	pointer to calculated Y Gyroscope mean value
+ * @param int *meanGz
+ * 	pointer to calculated Z Gyroscope mean value
+ *
+ */
 void meanSensors(void *mpu, int *meanAx, int *meanAy, int *meanAz, int *meanGx, int *meanGy, int *meanGz) {
 	long long i=0,buff_ax=0,buff_ay=0,buff_az=0,buff_gx=0,buff_gy=0,buff_gz=0;
 	short ax, ay, az, gx, gy, gz;
@@ -3680,7 +3922,37 @@ void meanSensors(void *mpu, int *meanAx, int *meanAy, int *meanAz, int *meanGx, 
 	        mpuDelay(200);
 	}
 }
-
+/*
+ * Callbration function, tries to callibrate the accelerometer and gyroscope by finding the optimal
+ * offset values by converging to them
+ *
+ * @param void *mpu
+ * 	void pointer to mpu object
+ * @param int *meanAx
+ * 	pointer to calculated X Acceleration mean value
+ * @param int *meanAy
+ * 	pointer to calculated Y Acceleration mean value
+ * @param int *meanAz
+ * 	pointer to calculated Z Acceleration mean value
+ * @param int *meanGx
+ * 	pointer to calculated X Gyroscope mean value
+ * @param int *meanGy
+ * 	pointer to calculated Y Gyroscope mean value
+ * @param int *meanGz
+ * 	pointer to calculated Z Gyroscope mean value
+ * @param short *ax_offset
+ * 	Pointer to acceleration x offset
+ * @param short *ay_offset
+ * 	Pointer to acceleration y offset
+ * @param short *az_offset
+ * 	Pointer to acceleration z offset
+ * @param short *gx_offset
+ * 	Pointer to gyroscope x offset
+ * @param short *gy_offset
+ * 	Pointer to gyroscope y offset
+ * @param short *gz_offset
+ * 	Pointer to gyroscope z offset
+ */
 void callibration(void *mpu, int *meanAx, int *meanAy, int *meanAz, int *meanGx, int *meanGy, int *meanGz, short *ax_offset, short *ay_offset, short *az_offset, short *gx_offset, short *gy_offset, short *gz_offset) {
 	int acel_deadzone=8;     //Acelerometer error allowed, make it lower to get more precision, but sketch may not converge  (default:8)
 	int giro_deadzone=1;     //Giro error allowed, make it lower to get more precision, but sketch may not converge  (default:1)
@@ -3757,7 +4029,11 @@ void callibration(void *mpu, int *meanAx, int *meanAy, int *meanAz, int *meanGx,
 	    if (ready==6) break;
 	  }
 }
-
+/*
+ * Delay function to avoid to fast actions
+ * @param
+ * 	delaytime
+ */
 void mpuDelay (volatile unsigned int del)
 {
 	while (del != 0)

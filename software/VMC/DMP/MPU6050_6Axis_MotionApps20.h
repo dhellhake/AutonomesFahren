@@ -658,22 +658,22 @@ bool MPU6050::dmpPacketAvailable() {
 // unsigned char MPU6050::dmpSendQuantizedAccel(uint_fast16_t elements, uint_fast16_t accuracy);
 // unsigned char MPU6050::dmpSendEIS(uint_fast16_t elements, uint_fast16_t accuracy);
 
-unsigned char MPU6050::dmpGetAccel(long *data, const unsigned char* packet) {
+unsigned char MPU6050::dmpGetAccel(INT32S *data, const INT8U* packet) {
 	// TODO: accommodate different arrangements of sent data (ONLY default supported now)
 	if (packet == 0)
 		packet = dmpPacketBuffer;
-	data[0] = (((unsigned long) packet[28] << 24)
-			| ((unsigned long) packet[29] << 16)
-			| ((unsigned long) packet[30] << 8) | packet[31]);
-	data[1] = (((unsigned long) packet[32] << 24)
-			| ((unsigned long) packet[33] << 16)
-			| ((unsigned long) packet[34] << 8) | packet[35]);
-	data[2] = (((unsigned long) packet[36] << 24)
-			| ((unsigned long) packet[37] << 16)
-			| ((unsigned long) packet[38] << 8) | packet[39]);
+	data[0] = (((INT32U) packet[28] << 24)
+			| ((INT32U) packet[29] << 16)
+			| ((INT32U) packet[30] << 8) | packet[31]);
+	data[1] = (((INT32U) packet[32] << 24)
+			| ((INT32U) packet[33] << 16)
+			| ((INT32U) packet[34] << 8) | packet[35]);
+	data[2] = (((INT32U) packet[36] << 24)
+			| ((INT32U) packet[37] << 16)
+			| ((INT32U) packet[38] << 8) | packet[39]);
 	return 0;
 }
-unsigned char MPU6050::dmpGetAccel(short *data, const unsigned char* packet) {
+unsigned char MPU6050::dmpGetAccel(INT16S *data, const INT8U* packet) {
 	// TODO: accommodate different arrangements of sent data (ONLY default supported now)
 	if (packet == 0)
 		packet = dmpPacketBuffer;
@@ -683,7 +683,7 @@ unsigned char MPU6050::dmpGetAccel(short *data, const unsigned char* packet) {
 	return 0;
 }
 unsigned char MPU6050::dmpGetAccel(VectorInt16 *v,
-		const unsigned char* packet) {
+		const INT8U* packet) {
 	// TODO: accommodate different arrangements of sent data (ONLY default supported now)
 	if (packet == 0)
 		packet = dmpPacketBuffer;
@@ -692,27 +692,27 @@ unsigned char MPU6050::dmpGetAccel(VectorInt16 *v,
 	v->z = (packet[36] << 8) | packet[37];
 	return 0;
 }
-unsigned char MPU6050::dmpGetQuaternion(long *data,
-		const unsigned char* packet) {
+unsigned char MPU6050::dmpGetQuaternion(INT32S *data,
+		const INT8U* packet) {
 	// TODO: accommodate different arrangements of sent data (ONLY default supported now)
 	if (packet == 0)
 		packet = dmpPacketBuffer;
-	data[0] = (((unsigned long) packet[0] << 24)
-			| ((unsigned long) packet[1] << 16)
-			| ((unsigned long) packet[2] << 8) | packet[3]);
-	data[1] = (((unsigned long) packet[4] << 24)
-			| ((unsigned long) packet[5] << 16)
-			| ((unsigned long) packet[6] << 8) | packet[7]);
-	data[2] = (((unsigned long) packet[8] << 24)
-			| ((unsigned long) packet[9] << 16)
-			| ((unsigned long) packet[10] << 8) | packet[11]);
-	data[3] = (((unsigned long) packet[12] << 24)
-			| ((unsigned long) packet[13] << 16)
-			| ((unsigned long) packet[14] << 8) | packet[15]);
+	data[0] = (((INT32S) packet[0] << 24)
+			| ((INT32S) packet[1] << 16)
+			| ((INT32S) packet[2] << 8) | packet[3]);
+	data[1] = (((INT32S) packet[4] << 24)
+			| ((INT32S) packet[5] << 16)
+			| ((INT32S) packet[6] << 8) | packet[7]);
+	data[2] = (((INT32S) packet[8] << 24)
+			| ((INT32S) packet[9] << 16)
+			| ((INT32S) packet[10] << 8) | packet[11]);
+	data[3] = (((INT32S) packet[12] << 24)
+			| ((INT32S) packet[13] << 16)
+			| ((INT32S) packet[14] << 8) | packet[15]);
 	return 0;
 }
-unsigned char MPU6050::dmpGetQuaternion(short *data,
-		const unsigned char* packet) {
+unsigned char MPU6050::dmpGetQuaternion(INT16S *data,
+		const INT8U* packet) {
 	// TODO: accommodate different arrangements of sent data (ONLY default supported now)
 	if (packet == 0)
 		packet = dmpPacketBuffer;
@@ -723,7 +723,7 @@ unsigned char MPU6050::dmpGetQuaternion(short *data,
 	return 0;
 }
 unsigned char MPU6050::dmpGetQuaternion(Quaternion *q,
-		const unsigned char* packet) {
+		const INT8U* packet) {
 	// TODO: accommodate different arrangements of sent data (ONLY default supported now)
 	short qI[4];
 	unsigned char status = dmpGetQuaternion(qI, packet);
@@ -738,22 +738,22 @@ unsigned char MPU6050::dmpGetQuaternion(Quaternion *q,
 }
 // unsigned char MPU6050::dmpGet6AxisQuaternion(long *data, const unsigned char* packet);
 // unsigned char MPU6050::dmpGetRelativeQuaternion(long *data, const unsigned char* packet);
-unsigned char MPU6050::dmpGetGyro(long *data, const unsigned char* packet) {
+unsigned char MPU6050::dmpGetGyro(INT32S *data, const INT8U* packet) {
 	// TODO: accommodate different arrangements of sent data (ONLY default supported now)
 	if (packet == 0)
 		packet = dmpPacketBuffer;
-	data[0] = (((unsigned long) packet[16] << 24)
-			| ((unsigned long) packet[17] << 16)
-			| ((unsigned long) packet[18] << 8) | packet[19]);
-	data[1] = (((unsigned long) packet[20] << 24)
-			| ((unsigned long) packet[21] << 16)
-			| ((unsigned long) packet[22] << 8) | packet[23]);
-	data[2] = (((unsigned long) packet[24] << 24)
-			| ((unsigned long) packet[25] << 16)
-			| ((unsigned long) packet[26] << 8) | packet[27]);
+	data[0] = (((INT32U) packet[16] << 24)
+			| ((INT32U) packet[17] << 16)
+			| ((INT32U) packet[18] << 8) | packet[19]);
+	data[1] = (((INT32U) packet[20] << 24)
+			| ((INT32U) packet[21] << 16)
+			| ((INT32U) packet[22] << 8) | packet[23]);
+	data[2] = (((INT32U) packet[24] << 24)
+			| ((INT32U) packet[25] << 16)
+			| ((INT32U) packet[26] << 8) | packet[27]);
 	return 0;
 }
-unsigned char MPU6050::dmpGetGyro(short *data, const unsigned char* packet) {
+unsigned char MPU6050::dmpGetGyro(INT16S *data, const INT8U* packet) {
 	// TODO: accommodate different arrangements of sent data (ONLY default supported now)
 	if (packet == 0)
 		packet = dmpPacketBuffer;
@@ -762,7 +762,7 @@ unsigned char MPU6050::dmpGetGyro(short *data, const unsigned char* packet) {
 	data[2] = (packet[24] << 8) | packet[25];
 	return 0;
 }
-unsigned char MPU6050::dmpGetGyro(VectorInt16 *v, const unsigned char* packet) {
+unsigned char MPU6050::dmpGetGyro(VectorInt16 *v, const INT8U* packet) {
 	// TODO: accommodate different arrangements of sent data (ONLY default supported now)
 	if (packet == 0)
 		packet = dmpPacketBuffer;
@@ -853,8 +853,8 @@ unsigned char MPU6050::dmpProcessFIFOPacket(const unsigned char *dmpData) {
 	//printf("%d \n",((unsigned short)dmpPacketBuffer));
 	return 0;
 }
-unsigned char MPU6050::dmpReadAndProcessFIFOPacket(unsigned char numPackets,
-		unsigned char *processed) {
+unsigned char MPU6050::dmpReadAndProcessFIFOPacket(INT8U numPackets,
+		INT8U *processed) {
 	unsigned char status;
 	unsigned char buf[dmpPacketSize];
 	for (unsigned char i = 0; i < numPackets; i++) {

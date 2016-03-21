@@ -34,7 +34,7 @@ THE SOFTWARE.
 
 #ifdef __cplusplus
 #include <math.h>
-
+#include "includes.h"
 
 
 class Quaternion {
@@ -96,9 +96,9 @@ class Quaternion {
 
 class VectorInt16 {
     public:
-        signed short x;
-        signed short y;
-        signed short z;
+        INT16S x;
+        INT16S y;
+        INT16S z;
 
         VectorInt16() {
             x = 0;
@@ -106,7 +106,7 @@ class VectorInt16 {
             z = 0;
         }
 
-        VectorInt16(signed short nx, signed short ny, signed short nz) {
+        VectorInt16(INT16S nx, INT16S ny, INT16S nz) {
             x = nx;
             y = ny;
             z = nz;
