@@ -182,15 +182,16 @@ void sensorCollector(void* pdata) {
 				fifoCount = mpuGetFIFOCount(myMPU);
 			}
 			mpuGetFIFOBytes(myMPU, fifoBuffer, dmpPacketSize);
-			memcpy(fifoBufferTmp, fifoBuffer, sizeof(char) * 64);
+
 			//gyro = mpuGetGyro(myMPU, fifoBuffer);
-			mpuDmpGetQuaternion(myMPU, &q, fifoBufferTmp);
 			memcpy(fifoBufferTmp, fifoBuffer, sizeof(char) * 64);
+			mpuDmpGetQuaternion(myMPU, &q, fifoBufferTmp);
 			mpuDmpGetGravity(myMPU, &gravity, &q);
+
 			mpuDmpGetYawPitchRoll(myMPU, yawPitchRol, &q, &gravity);
+
+			memcpy(fifoBufferTmp, fifoBuffer, sizeof(char) * 64);
 			mpuDmpGetAccel(myMPU, &accl, fifoBufferTmp);
-			//mpuDmpReadAndProcessFIFOPacket(myMPU, 1, &processed);
-			//delay(10000000);
 			//printf("Accl x: %d, y: %d, z: %d\n", accl.x, accl.y, accl.z);
 			//printf("Gyro x: %d, y: %d, z: %d\n", gyro.x, gyro.y, gyro.z);
 			printf("Yaw  %f, Pitch: %f, Roll: %f\n", yawPitchRol[2]*(180.0 / M_PI), yawPitchRol[1]*(180.0 / M_PI), yawPitchRol[0]*(180.0 / M_PI));
