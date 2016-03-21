@@ -143,7 +143,7 @@ snr_dmp_t* DMPGetValueSet()
 {
 	return (snr_dmp_t *) SNR_DMP_BASE;
 }
-void DMPSetValueSet(int yaw, int pitch, int roll, int accX, int accY, int accZ)
+void DMPSetValueSet(float yaw, float pitch, float roll, int accX, int accY, int accZ)
 {
 	snr_dmp_t* currentSet = (snr_dmp_t *) SNR_DMP_BASE;
 

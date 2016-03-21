@@ -122,7 +122,7 @@ extern inline mnv_item_t* MNV_Queue_EnQueue(unsigned int type);
 extern inline unsigned int MNV_Queue_Item_Available();
 extern void MNV_Queue_Test(void *pdata);
 extern snr_dmp_t* DMPGetValueSet();
-extern void DMPSetValueSet(int yaw, int pitch, int roll, int accX, int accY, int accZ);
+extern void DMPSetValueSet(float yaw, float pitch, float roll, int accX, int accY, int accZ);
 extern void speedControl(void *pdata);
 extern INT16S calcSteeringOffset(INT16S steeringValue);
 char getMeanSensorDistance(unsigned int *means);

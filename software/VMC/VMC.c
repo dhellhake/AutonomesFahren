@@ -156,7 +156,7 @@ void sensorCollector(void* pdata) {
 				}
 			}
 			OSMutexPend(mutex, 0, &return_code);
-			*pEmergencyStop = emergencyStop;
+				*pEmergencyStop = emergencyStop;
 			OSMutexPost(mutex);
 			emergencyStop = 0;
 		}
@@ -186,12 +186,16 @@ void sensorCollector(void* pdata) {
 			mpuDmpGetQuaternion(myMPU, &q, fifoBuffer);
 			mpuDmpGetGravity(myMPU, &gravity, &q);
 			mpuDmpGetYawPitchRoll(myMPU, yawPitchRol, &q, &gravity);
-			//mpuDmpGetAccel(myMPU, &accl, fifoBuffer);
+			mpuDmpGetAccel(myMPU, &accl, fifoBuffer);
 			//mpuDmpReadAndProcessFIFOPacket(myMPU, 1, &processed);
 			//delay(10000000);
 			//printf("Accl x: %d, y: %d, z: %d\n", accl.x, accl.y, accl.z);
 			//printf("Gyro x: %d, y: %d, z: %d\n", gyro.x, gyro.y, gyro.z);
 			printf("Yaw  %f, Pitch: %f, Roll: %f\n", yawPitchRol[2]*(180.0 / M_PI), yawPitchRol[1]*(180.0 / M_PI), yawPitchRol[0]*(180.0 / M_PI));
+
+			OSMutexPend(mutex, 0, &return_code);
+				DMPSetValueSet(yawPitchRol[2]*(180.0 / M_PI), yawPitchRol[1]*(180.0 / M_PI), yawPitchRol[0]*(180.0 / M_PI), accl.x, accl.y, accl.z);
+			OSMutexPost(mutex);
 		}
 		timeToWait = SENSOR_COLLECTOR_CYCLE_TIME_MS
 				- (OSTimeGet() - start_execution);
