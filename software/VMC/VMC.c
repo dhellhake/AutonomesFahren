@@ -218,13 +218,13 @@ void sensorCollector(void* pdata)
 		WHLSetState(*pFrontLeftEncRead, 0, WHL_VL);
 		OSMutexPost(mutex);
 		OSMutexPend(mutex, 0, &return_code);
-		//WHLSetState(*pFrontRightEncRead, 0, WHL_VR);
+		WHLSetState(*pFrontRightEncRead, 0, WHL_VR);
 		OSMutexPost(mutex);
 		OSMutexPend(mutex, 0, &return_code);
-		//WHLSetState(*pRearLeftEncRead, 0, WHL_HL);
+		WHLSetState(*pRearLeftEncRead, 0, WHL_HL);
 		OSMutexPost(mutex);
 		OSMutexPend(mutex, 0, &return_code);
-		//WHLSetState(*pRearRightEncRead, 0, WHL_HR);
+		WHLSetState(*pRearRightEncRead, 0, WHL_HR);
 		OSMutexPost(mutex);
 
 		// Calculation of timeToWait for cycle time
@@ -355,7 +355,7 @@ int main(void) {
 	// PC_SetTickRate(OS_TICKS_PER_SEC)
 	/* Clear Conext Switch Counter */
 	//OSCtxSwCtr = 0;
-	/*OSTaskCreateExt(speedControl,
+	OSTaskCreateExt(speedControl,
 	 NULL,
 	 &speedControl_stk[TASK_STACKSIZE-1],
 	 TASK_SPD_CTRL_PRIORITY,
@@ -363,7 +363,7 @@ int main(void) {
 	 speedControl_stk,
 	 TASK_STACKSIZE,
 	 NULL,
-	 0);*/
+	 0);
 
 	task_status = OSTaskCreateExt(sensorCollector,
 			NULL,
