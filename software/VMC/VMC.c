@@ -4,7 +4,6 @@
  *
  * TODO:
  *  - include mutex in getter/setter functions if possible
- *  - timestamps for sensor values
  */
 
 //#define DEBUG
@@ -17,7 +16,7 @@
 using namespace std;
 #endif
 
-INT32S desired_speed = 500;
+INT32S desired_speed = 1000;
 INT16S Kp_SpeedCtrl_num = 296;
 INT16S Kp_SpeedCtrl_den = 1000;
 INT16S Ki_SpeedCtrl_num = 897;
@@ -166,20 +165,11 @@ void sensorCollector(void* pdata)
 
 
 		/* ------------ Start reading Wheel Encoders ------------*/
-		//enum WHEEL_POS { WHL_VL = 0, WHL_VR = 1, WHL_HL = 2, WHL_HR = 3 };
-
-		//OSMutexPend(mutex, 0, &return_code);
 		WHLSetState(*pFrontLeftEncRead, 0, WHL_VL);
-		//OSMutexPost(mutex);
-		//OSMutexPend(mutex, 0, &return_code);
+		//WHLSetState(100, 0, WHL_VL);
 		WHLSetState(*pFrontRightEncRead, 0, WHL_VR);
-		//OSMutexPost(mutex);
-		//OSMutexPend(mutex, 0, &return_code);
 		WHLSetState(*pRearLeftEncRead, 0, WHL_HL);
-		//OSMutexPost(mutex);
-		//OSMutexPend(mutex, 0, &return_code);
 		WHLSetState(*pRearRightEncRead, 0, WHL_HR);
-		//OSMutexPost(mutex);
 
 		// Calculation of timeToWait for cycle time
 		timeToWait = SENSOR_COLLECTOR_CYCLE_TIME_MS
@@ -290,9 +280,7 @@ void readValues(void* pdata) {
 		printf("Sensor 3: %i\n", ultrasonic_test->_distance);
 		printf("Acc X: %i\n", mpu_test->_accX);
 
-		//OSMutexPend(mutex, 0, &return_code);
 		wheel_enc_test =  WHLGetState(WHL_VL);
-		//OSMutexPost(mutex);
 
 		printf("WheelTicks VL CMD/STATE MEM: %i WheelTicks VL direct: %i\n", wheel_enc_test->_ticks, *pFrontLeftEncRead);
 
