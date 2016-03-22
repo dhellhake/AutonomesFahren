@@ -125,7 +125,7 @@ extern snr_dmp_t* DMPGetValueSet();
 extern void DMPSetValueSet(float yaw, float pitch, float roll, int accX, int accY, int accZ);
 void initVMC(void);
 SENSOR_VALUE values[NUMBER_OF_ULTRA_SOUND_DEVICES];
-extern act_wheel_t* WHLGetState();
+extern act_wheel_t* WHLGetState(enum WHEEL_POS position);
 extern void WHLSetState(int ticks, int distance, enum WHEEL_POS position);
 
 #ifdef __cplusplus

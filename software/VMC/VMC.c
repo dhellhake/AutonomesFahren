@@ -4,6 +4,7 @@
  *
  * TODO:
  *  - include mutex in getter/setter functions if possible
+ *  - timestamps for sensor values
  */
 
 //#define DEBUG
@@ -103,7 +104,8 @@ void sensorCollector2(void* pdata) {
 	}
 }
 
-void sensorCollector(void* pdata) {
+void sensorCollector(void* pdata)
+{
 	INT32U start_execution;
 	INT32U timeToWait;
 
@@ -127,7 +129,7 @@ void sensorCollector(void* pdata) {
 
 	INT8U return_code = OS_NO_ERR;
 
-	// Start DMP/MPU
+	/* ------------ Start reading Ultrasound Devices ------------*/
 	dmpPacketSize = mpuDmpGetFIFOPacketSize(myMPU);
 	mpuResetFIFO(myMPU);
 	mpuSetDMPEnabled(myMPU, 1);
@@ -163,6 +165,7 @@ void sensorCollector(void* pdata) {
 			emergencyStop = 0;
 		}
 
+		/* ------------ Start reading DMP/MPU ------------*/
 		fifoCount = mpuGetFIFOCount(myMPU);
 		mpuStatus = mpuGetIntStatus(myMPU);
 
@@ -206,8 +209,28 @@ void sensorCollector(void* pdata) {
 					yawPitchRol[0] * (180.0 / M_PI), accl.x, accl.y, accl.z);
 			OSMutexPost(mutex);
 		}
+
+
+		/* ------------ Start reading Wheel Encoders ------------*/
+		//enum WHEEL_POS { WHL_VL = 0, WHL_VR = 1, WHL_HL = 2, WHL_HR = 3 };
+
+		OSMutexPend(mutex, 0, &return_code);
+		WHLSetState(*pFrontLeftEncRead, 0, WHL_VL);
+		OSMutexPost(mutex);
+		OSMutexPend(mutex, 0, &return_code);
+		//WHLSetState(*pFrontRightEncRead, 0, WHL_VR);
+		OSMutexPost(mutex);
+		OSMutexPend(mutex, 0, &return_code);
+		//WHLSetState(*pRearLeftEncRead, 0, WHL_HL);
+		OSMutexPost(mutex);
+		OSMutexPend(mutex, 0, &return_code);
+		//WHLSetState(*pRearRightEncRead, 0, WHL_HR);
+		OSMutexPost(mutex);
+
+		// Calculation of timeToWait for cycle time
 		timeToWait = SENSOR_COLLECTOR_CYCLE_TIME_MS
 				- (OSTimeGet() - start_execution);
+
 		if (timeToWait > 0)
 			OSTimeDlyHMSM(0, 0, 0, timeToWait);
 	}
@@ -268,6 +291,7 @@ void readValues(void* pdata) {
 	while (1) {
 		snr_sonic_t* ultrasonic_test;
 		snr_dmp_t* mpu_test;
+		act_wheel_t* wheel_enc_test;
 
 		start_execution = OSTimeGet();
 
@@ -281,6 +305,12 @@ void readValues(void* pdata) {
 
 		printf("Sensor 3: %i\n", ultrasonic_test->_distance);
 		printf("Acc X: %i\n", mpu_test->_accX);
+
+		OSMutexPend(mutex, 0, &return_code);
+		wheel_enc_test =  WHLGetState(WHL_VL);
+		OSMutexPost(mutex);
+
+		printf("WheelTicks VL CMD/STATE MEM: %i WheelTicks VL direct: %i\n", wheel_enc_test->_ticks, *pFrontLeftEncRead);
 
 		timeToWait = SENSOR_COLLECTOR_CYCLE_TIME_MS
 				- (OSTimeGet() - start_execution);

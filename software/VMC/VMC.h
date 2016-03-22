@@ -22,11 +22,11 @@
 
 // Sensors
 #include "Sensors\Ultrasound.h"
-#include "Sensors/helper_3dmathc.h"
-#include "Sensors/mpu6050.h"
+#include "Sensors\helper_3dmathc.h"
+#include "Sensors\mpu6050.h"
 
 // MotionControl
-#include "MotionControl/MotionControl.h"
+#include "MotionControl\MotionControl.h"
 
 #define WHL_CIRCUMFERENCE 		200 // [mm]
 #define WHL_TICKS_PER_REVOLUTION 	20 // [whl_tick]

@@ -111,6 +111,7 @@ snr_sonic_t* SONICGetState(enum SONIC_SENSOR_POS position)
 {
 	return (snr_sonic_t *) (SNR_SONIC_BASE + (sizeof(snr_sonic_t) * (int)position));
 }
+
 void SONICSetState(unsigned int distance, enum SONIC_SENSOR_POS position)
 {
 	snr_sonic_t* currentSonic = (snr_sonic_t *) (SNR_SONIC_BASE + (sizeof(snr_sonic_t) * (int)position));
@@ -120,14 +121,13 @@ void SONICSetState(unsigned int distance, enum SONIC_SENSOR_POS position)
 	//currentSonic->_timestamp =
 }
 
-
-act_wheel_t* WHLGetState()
+act_wheel_t* WHLGetState(enum WHEEL_POS position)
 {
-	return (act_wheel_t *) ACT_WHL_BASE;
+	return (act_wheel_t *) (ACT_WHL_BASE + (sizeof(act_wheel_t) * (int)position));
 }
 void WHLSetState(int ticks, int distance, enum WHEEL_POS position)
 {
-	act_wheel_t* currentWhl = (act_wheel_t *) (SNR_DMP_BASE * (int)position);
+	act_wheel_t* currentWhl = (act_wheel_t *) (ACT_WHL_BASE + (sizeof(act_wheel_t) * (int)position));
 
 	currentWhl->_distance = distance;
 	currentWhl->_ticks = ticks;
