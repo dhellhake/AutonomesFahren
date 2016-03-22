@@ -1,3 +1,7 @@
+/** @file
+ * \brief Source file that contains all miscellaneous functions for determining the control parameters.
+ */
+
 #include "vmc.h"
 
 void fast_forward_ctrl(void *pdata)
@@ -235,7 +239,7 @@ void step_response(void *pdata)
 
 	#ifdef DEBUG
 			printf("%d;%d\n", time, speed);
-			/*printf("time: %d\n", time);
+			printf("time: %d\n", time);
 			printf("time_old: %d\n", time_old);
 			printf("delta_t: %d\n", delta_t);
 
@@ -253,7 +257,7 @@ void step_response(void *pdata)
 
 			printf("speed: %d\n", speed);
 			printf("actual_speed_rr: %d\n", actual_speed_rr);
-			printf("desired_speed: %d\n", desired_speed);*/
+			printf("desired_speed: %d\n", desired_speed);
 	#endif
 
 			i = i + 1;

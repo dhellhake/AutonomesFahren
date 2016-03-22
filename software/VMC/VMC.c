@@ -1,22 +1,42 @@
-/* VMC.c */
 /** @file
- * @brief main file of vehicle management and control
+ *  VMC.c
+ * @brief Main file of the Vehicle Management and Control application
+ * of the Seminar-Course Autonomous Driving (IN4804) in WS15/16
+ *
+ * Team Members:
+ * Dominik Hellhake (03662000)
+ * Sebastian Pretschner
+ * Maximilian Schmitt (03665464)
+ *
+ * Version: 1.0 (final version for grading)
+ * Date: 2016-03-22
  *
  * TODO:
- *  - include mutex in getter/setter functions if possible
+ *  - include mutex in getter/setter functions if possible (partially done for wheel ticks)
+ *  - refactore code and implement coding guidelines to increase quality and maintainability
  */
 
+/**
+ * \def Debug-Switch to disable debug printouts.
+ * Note that debug printouts produce a large overhead and have very big influence on
+ * timing and stability of the complete application and thus should be used with care.
+ */
 //#define DEBUG
-#define DEBUG_SPD_CTRL
 //#define TEST
 
 #include "VMC.h"
 
+/*
+ * \def Since the original library of the MPU6050 was written in C++ we
+ * kept the capability to compile it either as C or C++ application. Therefore
+ * some mechanisms have to be implemented to run C functions in C++ and vice versa.
+ */
 #ifdef __cplusplus
 using namespace std;
 #endif
 
-INT32S desired_speed = 1000;
+// Initialization of global variables
+INT32S desired_speed = 500;		// [mm/s]
 INT16S Kp_SpeedCtrl_num = 296;
 INT16S Kp_SpeedCtrl_den = 1000;
 INT16S Ki_SpeedCtrl_num = 897;
@@ -28,7 +48,7 @@ INT32S I_SpeedCtrl_max = 100; //10000;
 INT32S P_SpeedCtrl = 0;
 INT32S I_SpeedCtrl = 0;
 INT32S D_SpeedCtrl = 0;
-INT16S g_i16s_PWMSpeedCtrl = 0;
+INT16S g_i16s_PWMSpeedCtrl = 0;		// [%]
 INT16S Fast_Forward_Control = 0;
 INT32S I_SpeedCtrl_error = 0;
 INT32U speed = 0;
@@ -49,7 +69,7 @@ OS_STK speedControl_stk[TASK_STACKSIZE];
 OS_STK emcyStp_stk[TASK_STACKSIZE];
 OS_STK test_stk[TASK_STACKSIZE];
 
-/* Definition of Task Priorities */
+/**\def Definition of Task Priorities */
 /* Each Task must have a unique priority number
  * between 0 and 254. Priority level 0 is the
  * highest priority.
@@ -58,6 +78,24 @@ OS_STK test_stk[TASK_STACKSIZE];
 #define TASK_SENSOR_COLLECTOR_PRIORITY  2
 #define TASK_SPD_CTRL_PRIORITY			3
 #define TASK_TEST_PRIORITY				4
+
+/** \fn void SensorCollector(void* pdata)
+ *  \brief This Task collects the the data of all equipped sensors of the car cyclic.
+ *  this contains the MPU6050 provides the values for acceleration and angles of rotation
+ *  in all degrees of freedom, the Ultrasound-Devices for the object and environment perception
+ *  as well as the wheel encoders.
+ *
+ *  The cycle time of the task is 60 ms which is the recommended cycle time in the data sheet
+ *  of the Ultrasound-Devices. Note that the task is very sensitive in relation to the cycle time
+ *  and changes in the task cycle times likely lead to errors in the data evaluation and calculation
+ *  and make the task very prone to crashes.
+ *
+ *  The task utilizes the getter and setter functions to access the state and command memory which is
+ *  defined in the system.h. Note that every read/write access to the state and command memory needs to
+ *  be protected by a mutex or else the application is likely to crash. For a better usability and to make
+ *  the usage of the getter/setter functions less error prone the protection should be integrated in the
+ *  functions itself in future versions.
+ */
 
 void sensorCollector(void* pdata)
 {
@@ -68,7 +106,7 @@ void sensorCollector(void* pdata)
 	unsigned int ultraSoundSensors[8];
 	int sensorCounter = 0;
 
-	// Emergency
+	// Emergency Stop
 	char emergencyStop = 0;
 
 	// DMP
@@ -87,13 +125,16 @@ void sensorCollector(void* pdata)
 	mpuResetFIFO(myMPU);
 	mpuSetDMPEnabled(myMPU, 1);
 
-	while (1) {
+	while (1)
+	{
 		start_execution = OSTimeGet();
 
-		if (getMeanSensorDistance(ultraSoundSensors) == 0) {
+		if (getMeanSensorDistance(ultraSoundSensors) == 0)
+		{
 			for (sensorCounter = 0;
 					sensorCounter < NUMBER_OF_ULTRA_SOUND_DEVICES;
-					sensorCounter++) {
+					sensorCounter++)
+			{
 #ifdef DEBUG
 				printf("Sensor %i: %i [mm]\n", sensorCounter,
 						ultraSoundSensors[sensorCounter]);
@@ -104,10 +145,11 @@ void sensorCollector(void* pdata)
 						(enum SONIC_SENSOR_POS) sensorCounter);
 				OSMutexPost(mutex);
 
-				if (ultraSoundSensors[sensorCounter] <= EMERGENCY_STOP_DISTANCE) {
+				if (ultraSoundSensors[sensorCounter] <= EMERGENCY_STOP_DISTANCE)
+				{
 					//TODO: We should raise a stop signal here
 #ifdef DEBUG
-					printf("Emergency stop!!\n");
+					printf("Emergency stop!\n");
 #endif
 					emergencyStop = 1;
 				}
@@ -122,12 +164,16 @@ void sensorCollector(void* pdata)
 		fifoCount = mpuGetFIFOCount(myMPU);
 		mpuStatus = mpuGetIntStatus(myMPU);
 
-		if ((mpuStatus & 0x10) || fifoCount == 1024) {
+		if ((mpuStatus & 0x10) || fifoCount == 1024)
+		{
 			mpuResetFIFO(myMPU);
 			printf("FIFO Overflow, reset\n");
-		} else if (mpuStatus & 0x02) {
+		}
+		else if (mpuStatus & 0x02)
+		{
 			//Read all old values and wait for newest to be written
-			while ((fifoCount - dmpPacketSize) >= dmpPacketSize) {
+			while ((fifoCount - dmpPacketSize) >= dmpPacketSize)
+			{
 				//Read till we have the last packet in the fifo, to avoid overflows
 				mpuGetFIFOBytes(myMPU, fifoBuffer, dmpPacketSize);
 				fifoCount = fifoCount - dmpPacketSize;
@@ -135,7 +181,8 @@ void sensorCollector(void* pdata)
 				//printf("Read to avoid overflow, paketsize is: %d, fifocount is: %d\n", dmpPacketSize, fifoCount);
 			}
 
-			while (fifoCount < dmpPacketSize) {
+			while (fifoCount < dmpPacketSize)
+			{
 				fifoCount = mpuGetFIFOCount(myMPU);
 			}
 			mpuGetFIFOBytes(myMPU, fifoBuffer, dmpPacketSize);
@@ -213,7 +260,12 @@ void emergencyStop(void* pdata)
 	}
 }
 
-void test(void* pdata) {
+/** \fn void testSteeringInterface(void* pdata)
+ *  \brief This is a test task to demonstrate the functionality of the
+ *  implementet steering interface.
+ */
+void testSteeringInterface(void* pdata)
+{
 	int i = 0;
 	g_i16s_PWMSpeedCtrl = 40;
 	*pwm_enable = (ALL_WHEEL_FWD_MASK | ENABLE_ENC_MASK);
@@ -235,34 +287,24 @@ void test(void* pdata) {
 
 	calcSteeringOffset(-100);
 	OSTimeDlyHMSM(0, 0, 3, 0);
-
-	/*for(i = 0; i < 20; i++)
-	 {
-	 desired_speed = i * 100;
-	 #ifdef DEBUG
-	 printf("desired_speed: %i\n", desired_speed);
-	 #endif
-	 OSTimeDlyHMSM(0,0,1,0);
-	 }
-
-	 for(i = 20; i >= 0; i--)
-	 {
-	 desired_speed = i * 100;
-	 #ifdef DEBUG
-	 printf("desired_speed: %i\n", desired_speed);
-	 #endif
-	 OSTimeDlyHMSM(0,0,1,0);
-	 }*/
 }
 
-void readValues(void* pdata) {
+/** \fn void readValues(void* pdata)
+ *  \brief This is a test task to demonstrate the functionality of the
+ *  getter and setter functions for the state and command memory. It utilizes
+ *  the functions of VMClib to read out the values in the state and command
+ *  memory that have been stored there previously by the sensorCollector Task.
+ */
+void readValues(void* pdata)
+{
 	INT32U start_execution;
 	INT32U timeToWait;
 
 	unsigned int ultraSoundSensors[8];
 	int sensorCounter = 0;
 
-	while (1) {
+	while (1)
+	{
 		snr_sonic_t* ultrasonic_test;
 		snr_dmp_t* mpu_test;
 		act_wheel_t* wheel_enc_test;
@@ -291,7 +333,10 @@ void readValues(void* pdata) {
 	}
 }
 
-/* The main function creates two task and starts multi-tasking */
+/** \fn int main(void)
+ *  \brief This is the main task of the applications. It carries out all necessary initializations
+ *  and then starts the previously defined tasks.
+ */
 int main(void) {
 	INT8U task_status = OS_NO_ERR;
 

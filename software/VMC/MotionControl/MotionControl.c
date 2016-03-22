@@ -1,11 +1,15 @@
-/*
+/** @file
  * MotionControl.c
  *
+ * \brief Source file that contains all files necessary to control the motion of the car.
  */
 
 #include "../VMC.h"
 
-/* Task for Speed Control with PID-Regulator */
+/** \fn void speedControl(void* pdata)
+ *  \brief Task for Speed Control with PID-Regulator
+ *
+ */
 void speedControl(void *pdata)
 {
 	int time = 0;
@@ -236,6 +240,14 @@ void speedControl(void *pdata)
 	}
 }
 
+/** \fn INT16S calcSteeringOffset(INT16S steeringValue)
+ *  \brief This task emulates a conventional steering of a car by
+ *  calculating a PWM-Offset to the actual PWM of the drive motors
+ *  to make the car move in the desired direction.
+ *
+ *  \param steeringValue Value that indicates the desired direction. Domain: [-100;100], where -100 corresponds to full left and 100 corresponds to full right
+ *  \return The offset value for the motor control drive as PWM in [%]
+ */
 INT16S calcSteeringOffset(INT16S steeringValue)
 {
 	INT16S pwmSteeringOffset = steeringValue / 2;

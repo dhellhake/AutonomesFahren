@@ -1,3 +1,9 @@
+/** @file
+ * Header file which contains all necessary declarations for the Vehicle Management and Control Project
+ * All necessary header files are included in this file, thus it is only necessary to include this header file
+ * in other source files.
+ */
+
 #ifndef _VMC_H_
 #define _VMC_H_
 
@@ -28,6 +34,7 @@
 // MotionControl
 #include "MotionControl\MotionControl.h"
 
+/* --------------- Macros --------------- */
 #define WHL_CIRCUMFERENCE 		200 // [mm]
 #define WHL_TICKS_PER_REVOLUTION 	20 // [whl_tick]
 #define DISTANCE_PER_WHL_TICK (WHL_CIRCUMFERENCE/WHL_TICKS_PER_REVOLUTION) // [mm/ whl_tick]
@@ -41,6 +48,7 @@
 
 #define EMERGENCY_STOP_DISTANCE 100
 
+/* --------------- Globals --------------- */
 extern INT32S desired_speed;
 extern INT16S Kp_SpeedCtrl_num;
 extern INT16S Kp_SpeedCtrl_den;
@@ -64,23 +72,5 @@ extern INT16S PWM_SpeedCtrl_min;
 extern INT32S step_size;
 extern OS_EVENT *mutex;
 extern INT8U return_code;
-
-typedef enum
-{
-	Ready,
-	SearchParkingSlot,
-	AntiClockRightAxis1,
-	BackwardApproach1,
-	AntiClock1,
-	AntiClock2,
-	BackwardApproach2,
-	parked
-} ParkingStateType_t;
-
-/*typedef enum
-{
-	true,
-	false
-} bool_t;*/
 
 #endif

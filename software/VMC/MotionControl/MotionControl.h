@@ -1,8 +1,8 @@
-/*
+/** @file
  * MotionControl.h
  *
- *  Created on: 22.03.2016
- *      Author: Mexx
+ *\brief Header file which contains all necessary declarations for the module MotionControl:
+ *
  */
 
 #ifndef MOTIONCONTROL_H_
