@@ -3776,7 +3776,7 @@ unsigned char mpuDmpGetYawPitchRoll(void *mpu, float *data, CQuaternion *q,
  * 	pointer to a fifo package from the dmp
  *
  */
-unsigned char mpuDmpGetAccel(void *mpu, CVectorInt16 *v, const CVectorInt16 *v) {
+unsigned char mpuDmpGetAccel(void *mpu, CVectorInt16 *v, const INT8U *packet) {
 	VectorInt16 *v1;
 	unsigned char ret = ((MPU6050*) mpu)->dmpGetAccel(v1, packet);
 	v->x = v1->x;

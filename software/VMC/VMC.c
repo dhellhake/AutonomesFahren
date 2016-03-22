@@ -1,6 +1,9 @@
 /* VMC.c */
 /** @file
  * @brief main file of vehicle management and control
+ *
+ * TODO:
+ *  - include mutex in getter/setter functions if possible
  */
 
 //#define DEBUG
