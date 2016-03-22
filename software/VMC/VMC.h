@@ -1,20 +1,32 @@
 #ifndef _VMC_H_
 #define _VMC_H_
 
+/* --------------- Includes --------------- */
+// Standard libraries
 #include <stdio.h>
 #include <io.h>
+#include "math.h"
+#include "string.h"
+#include <iostream>
+#include <cstdlib>
+
+// uC-OSII/NIOS/Altera
 #include "head.h"
 #include "includes.h"
 #include "time.h"
-#include "MPU6050/mpu6050.h"
-#include <iostream>
-#include <cstdlib>
 #include "altera_up_avalon_rs232.h"
 #include "system.h"
-#include "VMClib/VMClib.h"
-#include "DMP/helper_3dmathc.h"
-#include "math.h"
-#include "string.h"
+
+// VMClib
+#include "VMClib\VMClib.h"
+
+// Sensors
+#include "Sensors\Ultrasound.h"
+#include "Sensors/helper_3dmathc.h"
+#include "Sensors/mpu6050.h"
+
+// MotionControl
+#include "MotionControl/MotionControl.h"
 
 #define WHL_CIRCUMFERENCE 		200 // [mm]
 #define WHL_TICKS_PER_REVOLUTION 	20 // [whl_tick]

@@ -11,8 +11,6 @@
 //#define TEST
 
 #include "VMC.h"
-#include "DMP/MPU6050.h"
-#include "DMP/helper_3dmathc.h"
 
 #ifdef __cplusplus
 using namespace std;
@@ -160,7 +158,7 @@ void sensorCollector(void* pdata) {
 				}
 			}
 			OSMutexPend(mutex, 0, &return_code);
-				*pEmergencyStop = emergencyStop;
+			*pEmergencyStop = emergencyStop;
 			OSMutexPost(mutex);
 			emergencyStop = 0;
 		}
@@ -197,10 +195,15 @@ void sensorCollector(void* pdata) {
 			mpuDmpGetAccel(myMPU, &accl, fifoBufferTmp);
 			//printf("Accl x: %d, y: %d, z: %d\n", accl.x, accl.y, accl.z);
 			//printf("Gyro x: %d, y: %d, z: %d\n", gyro.x, gyro.y, gyro.z);
-			printf("Yaw  %f, Pitch: %f, Roll: %f\n", yawPitchRol[2]*(180.0 / M_PI), yawPitchRol[1]*(180.0 / M_PI), yawPitchRol[0]*(180.0 / M_PI));
+			printf("Yaw  %f, Pitch: %f, Roll: %f\n",
+					yawPitchRol[2] * (180.0 / M_PI),
+					yawPitchRol[1] * (180.0 / M_PI),
+					yawPitchRol[0] * (180.0 / M_PI));
 
 			OSMutexPend(mutex, 0, &return_code);
-				DMPSetValueSet(yawPitchRol[2]*(180.0 / M_PI), yawPitchRol[1]*(180.0 / M_PI), yawPitchRol[0]*(180.0 / M_PI), accl.x, accl.y, accl.z);
+			DMPSetValueSet(yawPitchRol[2] * (180.0 / M_PI),
+					yawPitchRol[1] * (180.0 / M_PI),
+					yawPitchRol[0] * (180.0 / M_PI), accl.x, accl.y, accl.z);
 			OSMutexPost(mutex);
 		}
 		timeToWait = SENSOR_COLLECTOR_CYCLE_TIME_MS
@@ -269,13 +272,12 @@ void readValues(void* pdata) {
 		start_execution = OSTimeGet();
 
 		OSMutexPend(mutex, 0, &return_code);
-			ultrasonic_test = SONICGetState(3);
+		ultrasonic_test = SONICGetState(3);
 		OSMutexPost(mutex);
 
 		OSMutexPend(mutex, 0, &return_code);
-			mpu_test = DMPGetValueSet();
+		mpu_test = DMPGetValueSet();
 		OSMutexPost(mutex);
-
 
 		printf("Sensor 3: %i\n", ultrasonic_test->_distance);
 		printf("Acc X: %i\n", mpu_test->_accX);
@@ -333,16 +335,29 @@ int main(void) {
 	 NULL,
 	 0);*/
 
-	task_status = OSTaskCreateExt(sensorCollector, NULL,
+	task_status = OSTaskCreateExt(sensorCollector,
+			NULL,
 			(void *) &sensorCollector_stk[TASK_STACKSIZE - 1],
-			TASK_SENSOR_COLLECTOR_PRIORITY, TASK_SENSOR_COLLECTOR_PRIORITY,
-			sensorCollector_stk, TASK_STACKSIZE, NULL, 0);
+			TASK_SENSOR_COLLECTOR_PRIORITY,
+			TASK_SENSOR_COLLECTOR_PRIORITY,
+			sensorCollector_stk,
+			TASK_STACKSIZE,
+			NULL,
+			0);
 
+#ifdef DEBUG
 	printf("task status: %i; OS_NO_ERROR: %i\n", task_status, OS_NO_ERR);
+#endif
 
-	OSTaskCreateExt(readValues, NULL, &test_stk[TASK_STACKSIZE - 1],
-			TASK_TEST_PRIORITY, TASK_TEST_PRIORITY, test_stk, TASK_STACKSIZE,
-			NULL, 0);
+	OSTaskCreateExt(readValues,
+			NULL,
+			&test_stk[TASK_STACKSIZE - 1],
+			TASK_TEST_PRIORITY,
+			TASK_TEST_PRIORITY,
+			test_stk,
+			TASK_STACKSIZE,
+			NULL,
+			0);
 
 	OSStart();
 	return 0;
