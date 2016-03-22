@@ -39,70 +39,26 @@ INT16S PWM_SpeedCtrl_max = 80; // more than 80% PWM-DutyCycle leads to faulty va
 INT16S PWM_SpeedCtrl_min = 0;
 INT32S step_size = 50;
 OS_EVENT *mutex = NULL;
+INT8U return_code = OS_NO_ERR;
 
 #ifndef TEST
 
 /* Definition of Task Stacks */
 #define   TASK_STACKSIZE       2048
 OS_STK sensorCollector_stk[TASK_STACKSIZE];
-OS_STK drivingTask_stk[TASK_STACKSIZE];
 OS_STK speedControl_stk[TASK_STACKSIZE];
-OS_STK uart_stk[TASK_STACKSIZE];
+OS_STK emcyStp_stk[TASK_STACKSIZE];
 OS_STK test_stk[TASK_STACKSIZE];
-OS_STK step_response_stk[TASK_STACKSIZE];
 
 /* Definition of Task Priorities */
 /* Each Task must have a unique priority number
  * between 0 and 254. Priority level 0 is the
  * highest priority.
  */
-#define TASK_SPD_CTRL_PRIORITY			2
-#define TASK_SENSOR_COLLECTOR_PRIORITY  1
-#define TASK2_PRIORITY      			3
-#define TASK_UART_PRIORITY				4
-#define TASK_TEST_PRIORITY				7
-#define TASK_STP_RESP_PRIORITY			6
-
-void sensorCollector2(void* pdata) {
-	// make signed variable because of timeToWait calculation could be negative
-	INT32S start_execution = 0;
-	INT32S timeToWait = 0;
-
-	unsigned int ultraSoundSensors[8];
-	int sensorCounter = 0;
-	char emergencyStop = 0;
-
-	while (1) {
-		start_execution = OSTimeGet();
-
-		/*if (getMeanSensorDistance(ultraSoundSensors) == 0)
-		 {
-		 for (sensorCounter = 0; sensorCounter < NUMBER_OF_ULTRA_SOUND_DEVICES; sensorCounter++)
-		 {
-		 printf("Sensor %i: %i [mm]\n", sensorCounter, ultraSoundSensors[sensorCounter]);
-
-		 if(sensorCounter == 0)
-		 if (ultraSoundSensors[sensorCounter] <= EMERGENCY_STOP_DISTANCE)
-		 {
-		 //TODO: We should raise a stop signal here
-		 //printf("Emergency stop!!\n");
-		 emergencyStop = 1;
-		 }
-		 }
-		 //*pEmergencyStop = emergencyStop;
-		 emergencyStop = 0;
-		 }
-
-		 //delay(100000);*/
-
-		timeToWait = SENSOR_COLLECTOR_CYCLE_TIME_MS
-				- (OSTimeGet() - start_execution);
-		printf("timeToWait: %i\n", timeToWait);
-
-		if (timeToWait > 0)
-			OSTimeDlyHMSM(0, 0, 0, timeToWait);
-	}
-}
+#define TASK_EMCY_STP_PRIORITY      	1
+#define TASK_SENSOR_COLLECTOR_PRIORITY  2
+#define TASK_SPD_CTRL_PRIORITY			3
+#define TASK_TEST_PRIORITY				4
 
 void sensorCollector(void* pdata)
 {
@@ -126,8 +82,6 @@ void sensorCollector(void* pdata)
 	CVectorFloat gravity;
 	CVectorInt16 accl;
 	float yawPitchRol[3];
-
-	INT8U return_code = OS_NO_ERR;
 
 	/* ------------ Start reading Ultrasound Devices ------------*/
 	dmpPacketSize = mpuDmpGetFIFOPacketSize(myMPU);
@@ -214,21 +168,54 @@ void sensorCollector(void* pdata)
 		/* ------------ Start reading Wheel Encoders ------------*/
 		//enum WHEEL_POS { WHL_VL = 0, WHL_VR = 1, WHL_HL = 2, WHL_HR = 3 };
 
-		OSMutexPend(mutex, 0, &return_code);
+		//OSMutexPend(mutex, 0, &return_code);
 		WHLSetState(*pFrontLeftEncRead, 0, WHL_VL);
-		OSMutexPost(mutex);
-		OSMutexPend(mutex, 0, &return_code);
+		//OSMutexPost(mutex);
+		//OSMutexPend(mutex, 0, &return_code);
 		WHLSetState(*pFrontRightEncRead, 0, WHL_VR);
-		OSMutexPost(mutex);
-		OSMutexPend(mutex, 0, &return_code);
+		//OSMutexPost(mutex);
+		//OSMutexPend(mutex, 0, &return_code);
 		WHLSetState(*pRearLeftEncRead, 0, WHL_HL);
-		OSMutexPost(mutex);
-		OSMutexPend(mutex, 0, &return_code);
+		//OSMutexPost(mutex);
+		//OSMutexPend(mutex, 0, &return_code);
 		WHLSetState(*pRearRightEncRead, 0, WHL_HR);
-		OSMutexPost(mutex);
+		//OSMutexPost(mutex);
 
 		// Calculation of timeToWait for cycle time
 		timeToWait = SENSOR_COLLECTOR_CYCLE_TIME_MS
+				- (OSTimeGet() - start_execution);
+
+		if (timeToWait > 0)
+			OSTimeDlyHMSM(0, 0, 0, timeToWait);
+	}
+}
+
+void emergencyStop(void* pdata)
+{
+	INT32U start_execution;
+	INT32U timeToWait;
+
+	INT8U emergencyStop = 0;
+
+	while(1)
+	{
+		OSMutexPend(mutex, 0, &return_code);
+		emergencyStop = *pEmergencyStop;
+		OSMutexPost(mutex);
+
+		if(emergencyStop == 1)
+		{
+			printf("EmergencyStop: %d\n", emergencyStop);
+			set_duty_cycle( pFrontRightDutySet, 0);
+			set_duty_cycle(pRearRightDutySet, 0);
+			set_duty_cycle(pRearLeftDutySet, 0);
+			set_duty_cycle(pFrontLeftDutySet, 0);
+		}
+		else
+			; // no action necessary since Speed Controller sets PWM automatically back to intended value
+
+		// Calculation of timeToWait for cycle time
+		timeToWait = EMERCENCY_STOP_CYCLE_TIME_MS
 				- (OSTimeGet() - start_execution);
 
 		if (timeToWait > 0)
@@ -284,9 +271,6 @@ void readValues(void* pdata) {
 
 	unsigned int ultraSoundSensors[8];
 	int sensorCounter = 0;
-	char emergencyStop = 0;
-
-	INT8U return_code = OS_NO_ERR;
 
 	while (1) {
 		snr_sonic_t* ultrasonic_test;
@@ -306,9 +290,9 @@ void readValues(void* pdata) {
 		printf("Sensor 3: %i\n", ultrasonic_test->_distance);
 		printf("Acc X: %i\n", mpu_test->_accX);
 
-		OSMutexPend(mutex, 0, &return_code);
+		//OSMutexPend(mutex, 0, &return_code);
 		wheel_enc_test =  WHLGetState(WHL_VL);
-		OSMutexPost(mutex);
+		//OSMutexPost(mutex);
 
 		printf("WheelTicks VL CMD/STATE MEM: %i WheelTicks VL direct: %i\n", wheel_enc_test->_ticks, *pFrontLeftEncRead);
 
@@ -331,6 +315,7 @@ int main(void) {
 
 	/* Create Semaphor */
 	//Sem = OSSemCreate(1);
+
 	/* Acquiring semaphore is done by calling OSSemPend()
 	 * and passing it the 'handle' of the semaphore which
 	 * was created earlier. The second argument of OSSemPen()
@@ -341,21 +326,26 @@ int main(void) {
 	 * important task.
 	 */
 	//OSSemPend(Sem, timeout, &err);
+
 	/* Semaphore is released by calling OSSemPost(). Here
 	 * simply the handle of the semaphore has to be specified.
 	 */
 	//OSSemPost(Sem);
+
 	/* Processor specific macro used to disable interrupts */
 	//OS_ENTER_CRITICAL();
 	//OS_EXIT_CRITICAL();
+
 	/* Changing tick rate is handled by PC service called
 	 * PC_SetTickRate() and is passed the desired tick rate
 	 * (Set OS_TICKS_PER_SEC in system.h)
 	 */
 	// PC_SetTickRate(OS_TICKS_PER_SEC)
+
 	/* Clear Conext Switch Counter */
 	//OSCtxSwCtr = 0;
-	OSTaskCreateExt(speedControl,
+
+	/*OSTaskCreateExt(speedControl,
 	 NULL,
 	 &speedControl_stk[TASK_STACKSIZE-1],
 	 TASK_SPD_CTRL_PRIORITY,
@@ -363,7 +353,7 @@ int main(void) {
 	 speedControl_stk,
 	 TASK_STACKSIZE,
 	 NULL,
-	 0);
+	 0);*/
 
 	task_status = OSTaskCreateExt(sensorCollector,
 			NULL,
@@ -388,6 +378,16 @@ int main(void) {
 			TASK_STACKSIZE,
 			NULL,
 			0);
+
+	/*OSTaskCreateExt(emergencyStop,
+				NULL,
+				&emcyStp_stk[TASK_STACKSIZE - 1],
+				TASK_EMCY_STP_PRIORITY,
+				TASK_EMCY_STP_PRIORITY,
+				emcyStp_stk,
+				TASK_STACKSIZE,
+				NULL,
+				0);*/
 
 	OSStart();
 	return 0;

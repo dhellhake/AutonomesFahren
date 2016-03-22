@@ -118,20 +118,29 @@ void SONICSetState(unsigned int distance, enum SONIC_SENSOR_POS position)
 
 	currentSonic->_distance = distance;
 	currentSonic->_position = position;
-	//currentSonic->_timestamp =
+	currentSonic->_timestamp = OSTimeGet();
 }
 
 act_wheel_t* WHLGetState(enum WHEEL_POS position)
 {
-	return (act_wheel_t *) (ACT_WHL_BASE + (sizeof(act_wheel_t) * (int)position));
+	OSMutexPend(mutex, 0, &return_code);
+	act_wheel_t* act_wheel_tick = (ACT_WHL_BASE + (sizeof(act_wheel_t) * (int)position));
+	OSMutexPost(mutex);
+
+	return act_wheel_tick;
+	//return (act_wheel_t *) (ACT_WHL_BASE + (sizeof(act_wheel_t) * (int)position));
 }
 void WHLSetState(int ticks, int distance, enum WHEEL_POS position)
 {
+	OSMutexPend(mutex, 0, &return_code);
+
 	act_wheel_t* currentWhl = (act_wheel_t *) (ACT_WHL_BASE + (sizeof(act_wheel_t) * (int)position));
 
 	currentWhl->_distance = distance;
 	currentWhl->_ticks = ticks;
-	//currentWhl->_timestamp =
+	currentWhl->_timestamp = OSTimeGet();
+
+	OSMutexPost(mutex);
 }
 
 
@@ -149,5 +158,5 @@ void DMPSetValueSet(float yaw, float pitch, float roll, int accX, int accY, int 
 	currentSet->_accX = accX;
 	currentSet->_accY = accY;
 	currentSet->_accZ = accZ;
-	//currentSet->_timestamp =
+	currentSet->_timestamp = OSTimeGet();
 }

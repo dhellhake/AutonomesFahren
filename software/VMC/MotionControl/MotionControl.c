@@ -216,7 +216,7 @@ void speedControl(void *pdata)
 #endif
 		/* increment index variable for moving on mean calculation */
 		i = i + 1;
-
+		/*
 		if(*pEmergencyStop == 1)
 		{
 			printf("EmergencyStop: %d\n", *pEmergencyStop);
@@ -224,7 +224,7 @@ void speedControl(void *pdata)
 			set_duty_cycle(pRearRightDutySet, 0);
 			set_duty_cycle(pRearLeftDutySet, 0);
 			set_duty_cycle(pFrontLeftDutySet, 0);
-		}
+		}*/
 
 		timeToWait = SPD_CTRL_CYCLE_TIME_MS - (OSTimeGet() - start_execution);
 

@@ -35,9 +35,9 @@
 #define OS_TICKS_PER_USEC (OS_TICKS_PER_SEC/1000000)
 #define OS_TICKS_PER_MSEC (OS_TICKS_PER_SEC/1000)
 
-#define SPD_CTRL_CYCLE_TIME_MS 200
-#define STP_RESP_CYCLE_TIME_MS 100
-#define SENSOR_COLLECTOR_CYCLE_TIME_MS 60
+#define SPD_CTRL_CYCLE_TIME_MS 			100
+#define SENSOR_COLLECTOR_CYCLE_TIME_MS 	60
+#define EMERCENCY_STOP_CYCLE_TIME_MS	10
 
 #define EMERGENCY_STOP_DISTANCE 100
 
@@ -63,6 +63,7 @@ extern INT16S PWM_SpeedCtrl_max;
 extern INT16S PWM_SpeedCtrl_min;
 extern INT32S step_size;
 extern OS_EVENT *mutex;
+extern INT8U return_code;
 
 typedef enum
 {
